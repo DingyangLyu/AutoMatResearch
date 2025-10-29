@@ -1,12 +1,15 @@
 import logging
-import os
 from datetime import datetime
 from config.settings import settings
 
 def setup_logger():
     """设置日志配置"""
-    # 创建logs目录
-    os.makedirs("logs", exist_ok=True)
+    # 使用settings中的日志文件路径
+    log_filename = settings.log_file_path
+    error_log_filename = log_filename.parent / f"error_{datetime.now().strftime('%Y%m')}.log"
+
+    # 创建日志目录
+    log_filename.parent.mkdir(parents=True, exist_ok=True)
 
     # 设置日志格式
     formatter = logging.Formatter(
@@ -27,13 +30,11 @@ def setup_logger():
     root_logger.addHandler(console_handler)
 
     # 文件handler
-    log_filename = f"logs/{settings.LOG_FILE}"
     file_handler = logging.FileHandler(log_filename, encoding='utf-8')
     file_handler.setFormatter(formatter)
     root_logger.addHandler(file_handler)
 
     # 错误日志单独文件
-    error_log_filename = f"logs/error_{datetime.now().strftime('%Y%m')}.log"
     error_handler = logging.FileHandler(error_log_filename, encoding='utf-8')
     error_handler.setLevel(logging.ERROR)
     error_handler.setFormatter(formatter)

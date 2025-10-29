@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from typing import List, Dict, Any
 import json
+from dotenv import load_dotenv
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -23,8 +24,11 @@ TEMPLATES_DIR = WEB_DIR / "templates"
 
 # 配置文件路径
 CONFIG_DIR = PROJECT_ROOT / "config"
-ENV_FILE = CONFIG_DIR / ".env"
+ENV_FILE = PROJECT_ROOT / ".env"
 USER_CONFIG_FILE = CONFIG_DIR / "user_config.json"
+
+# 加载 .env 文件
+load_dotenv(ENV_FILE)
 
 class Settings:
     """应用配置类"""
