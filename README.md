@@ -2,6 +2,13 @@
 
 基于DeepSeek的智能论文自动爬取和分析系统，可以每天自动爬取指定关键词的arXiv论文，并使用DeepSeek进行智能分析和摘要生成。
 
+## 🌟 项目亮点
+
+- **🤖 AI驱动分析**: 集成DeepSeek大模型，提供深度论文分析和研究洞察
+- **⚡ 高效爬取**: 智能去重和增量更新，避免重复处理
+- **🔧 灵活配置**: 支持自定义关键词、爬取频率和分析策略
+- **📊 数据可视化**: Web界面展示论文趋势和统计信息
+
 > **注意**: 项目已进行代码清理，删除了所有缓存文件和重复内容，提升了运行效率和代码可维护性。
 
 ## 🚀 快速开始
@@ -14,8 +21,8 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/automainresearch.git
-cd automatresearch
+git clone https://github.com/DingyangLyu/AutoMatResearch.git
+cd AutoMatResearch
 
 # 创建虚拟环境（推荐）
 python -m venv venv
@@ -34,8 +41,8 @@ cp .env.example .env
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/automainresearch.git
-cd automatresearch
+git clone https://github.com/DingyangLyu/AutoMatResearch.git
+cd AutoMatResearch
 
 # 安装依赖
 pip install -r requirements.txt
@@ -206,9 +213,11 @@ python run.py --mode scheduler
 ## 📝 项目维护说明
 
 ### 最近更新 (2025-10-30)
-- **清理项目结构**: 删除了所有 Python 缓存文件 (`__pycache__` 和 `.pyc`)
-- **移除重复内容**: 清理了重复的日志目录和空目录
-- **优化文档**: 更新 README 以反映当前项目结构
+- **🎉 项目初始化**: 完成项目初始化和基础架构搭建
+- **🔧 SSH配置**: 配置Git SSH密钥，实现无密码推送
+- **📝 文档完善**: 更新README文档，修正仓库链接和项目信息
+- **🧹 代码清理**: 删除了所有 Python 缓存文件 (`__pycache__` 和 `.pyc`)
+- **📁 结构优化**: 移除重复内容，清理日志目录和空目录
 
 ### 重构说明
 本项目经过重构，采用了模块化的项目结构：
@@ -231,12 +240,25 @@ python run.py --mode scheduler
 
 欢迎提交Issue和Pull Request来改进这个项目！
 
+## 📞 联系方式
+
+- **项目维护者**: DingyangLyu
+- **GitHub**: [@DingyangLyu](https://github.com/DingyangLyu)
+- **邮箱**: s-ldy25@bjzgca.edu.cn
+
+## 📈 项目状态
+
+![GitHub stars](https://img.shields.io/github/stars/DingyangLyu/AutoMatResearch)
+![GitHub forks](https://img.shields.io/github/forks/DingyangLyu/AutoMatResearch)
+![GitHub issues](https://img.shields.io/github/issues/DingyangLyu/AutoMatResearch)
+![GitHub license](https://img.shields.io/github/license/DingyangLyu/AutoMatResearch)
+
 ### 开发环境设置
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/automainsearch.git
-cd automatresearch
+git clone https://github.com/DingyangLyu/AutoMatResearch.git
+cd AutoMatResearch
 
 # 创建开发环境
 python -m venv venv
