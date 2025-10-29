@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}关键词管理 - arXiv论文爬取Agent{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-tags"></i> 关键词管理
+    </h1>
+</div>
+
+<div class="row">
+    <!-- 添加关键词 -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-plus"></i> 添加关键词</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" name="action" value="add">
+                    <div class="mb-3">
+                        <label for="keyword" class="form-label">关键词</label>
+                        <input type="text" class="form-control" id="keyword" name="keyword"
+                               placeholder="例如: machine learning" required>
+                        <div class="form-text">支持英文关键词，建议使用技术术语</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> 添加
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量设置 -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-edit"></i> 批量设置关键词</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" name="action" value="set">
+                    <div class="mb-3">
+                        <label for="keywords" class="form-label">关键词列表</label>
+                        <textarea class="form-control" id="keywords" name="keywords" rows="4"
+                                  placeholder="用逗号分隔多个关键词，例如：machine learning, deep learning, neural network">{{ keywords|join(', ') }}</textarea>
+                        <div class="form-text">这将替换所有现有关键词</div>
+                    </div>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save"></i> 更新所有关键词
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 当前关键词列表 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-list"></i> 当前关键词 ({{ keywords|length }}个)</h5>
+            </div>
+            <div class="card-body">
+                {% if keywords %}
+                    <div class="row">
+                        {% for keyword in keywords %}
+                            <div class="col-md-3 mb-3">
+                                <div class="card border-primary">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-text">{{ keyword }}</h6>
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="action" value="remove">
+                                            <input type="hidden" name="keyword" value="{{ keyword }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('确定要删除关键词 "{{ keyword }}" 吗？')">
+                                                <i class="fas fa-trash"></i> 删除
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-tags fa-3x mb-3"></i>
+                        <p>暂无关键词</p>
+                        <p class="small">添加关键词以开始爬取相关论文</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 使用建议 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-lightbulb"></i> 关键词使用建议</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>推荐的关键词类型：</h6>
+                        <ul>
+                            <li>技术术语：machine learning, neural network, transformer</li>
+                            <li>应用领域：computer vision, natural language processing</li>
+                            <li>方法论：reinforcement learning, supervised learning</li>
+                            <li>模型架构：GAN, VAE, attention mechanism</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>使用技巧：</h6>
+                        <ul>
+                            <li>使用英文关键词效果更好</li>
+                            <li>避免过于宽泛的词汇（如 "AI"）</li>
+                            <li>可以添加具体的技术术语</li>
+                            <li>建议设置3-10个关键词</li>
+                            <li>定期根据研究趋势调整关键词</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

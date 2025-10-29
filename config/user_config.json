@@ -1,0 +1,17 @@
+{
+  "keywords": [
+    "material science",
+    "machine learning"
+  ],
+  "max_papers_per_day": 10,
+  "schedule_time": "09:00",
+  "auto_summarize": true,
+  "notification_enabled": false,
+  "notification_email": "",
+  "categories": [
+    "cs.AI",
+    "cs.LG",
+    "cs.CV",
+    "cs.CL"
+  ]
+}

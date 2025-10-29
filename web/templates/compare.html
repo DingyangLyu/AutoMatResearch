@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}论文比较 - arXiv论文爬取Agent{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-balance-scale"></i> 论文比较
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-plus"></i> 添加论文进行比较</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="paper_ids" class="form-label">论文arXiv ID列表</label>
+                        <textarea class="form-control" id="paper_ids" name="paper_ids" rows="4"
+                                  placeholder="输入多个arXiv ID，用空格或换行分隔&#10;例如：&#10;2301.00001&#10;2301.00002&#10;2301.00003" required></textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 请输入至少两个论文的arXiv ID（格式如：2301.00001）
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-balance-scale"></i> 开始比较
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-question-circle"></i> 使用说明</h5>
+            </div>
+            <div class="card-body">
+                <h6>📝 如何获取论文ID？</h6>
+                <ul>
+                    <li>从论文列表页面查看</li>
+                    <li>arXiv论文URL中的ID部分</li>
+                    <li>例如：https://arxiv.org/abs/2301.00001 中的 "2301.00001"</li>
+                </ul>
+
+                <h6>🔍 比较内容包括：</h6>
+                <ul>
+                    <li>研究目标和问题的异同</li>
+                    <li>方法论的区别</li>
+                    <li>主要贡献和创新点</li>
+                    <li>优缺点对比</li>
+                    <li>适用场景的差异</li>
+                </ul>
+
+                <h6>💡 使用技巧：</h6>
+                <ul>
+                    <li>选择相似主题的论文</li>
+                    <li>比较同一领域的不同方法</li>
+                    <li>分析技术的演进趋势</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 比较结果 -->
+{% if comparison %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line"></i> 比较分析结果</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>比较论文：</strong>
+                    {% for id in paper_ids %}
+                        <span class="badge bg-primary">{{ id }}</span>
+                    {% endfor %}
+                </div>
+                <div class="bg-light p-3 rounded">
+                    {{ comparison|nl2br }}
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('papers') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> 返回论文列表
+                    </a>
+                    <button onclick="window.print()" class="btn btn-outline-primary">
+                        <i class="fas fa-print"></i> 打印结果
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

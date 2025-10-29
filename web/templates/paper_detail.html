@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}{{ paper.title[:50] }} - 论文详情{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-book-open"></i> 论文详情
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('papers') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> 返回列表
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>{{ paper.title }}</h3>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <p><strong>作者：</strong> {{ paper.authors|join(', ') }}</p>
+                <p><strong>arXiv ID：</strong>
+                    <a href="https://arxiv.org/abs/{{ paper.arxiv_id }}" target="_blank">
+                        {{ paper.arxiv_id }}
+                    </a>
+                </p>
+                <p><strong>发布日期：</strong> {{ paper.published_date }}</p>
+                <p><strong>分类：</strong>
+                    {% for category in paper.categories %}
+                        <span class="badge bg-secondary">{{ category }}</span>
+                    {% endfor %}
+                </p>
+            </div>
+            <div class="col-md-4">
+                <div class="d-grid gap-2">
+                    <a href="https://arxiv.org/pdf/{{ paper.arxiv_id }}.pdf" target="_blank"
+                       class="btn btn-primary">
+                        <i class="fas fa-file-pdf"></i> 下载PDF
+                    </a>
+                    <a href="https://arxiv.org/abs/{{ paper.arxiv_id }}" target="_blank"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-external-link-alt"></i> arXiv页面
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if paper.summary %}
+        <div class="mb-4">
+            <h5><i class="fas fa-robot"></i> AI生成的摘要</h5>
+            <div class="alert alert-info">
+                {{ paper.summary|nl2br }}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="mb-4">
+            <h5><i class="fas fa-file-alt"></i> 原始摘要</h5>
+            <div class="bg-light p-3 rounded">
+                {{ paper.abstract|nl2br }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-cog"></i> 操作</h6>
+                <div class="btn-group-vertical" role="group">
+                    <button class="btn btn-outline-primary" onclick="copyToClipboard('{{ paper.arxiv_id }}')">
+                        <i class="fas fa-copy"></i> 复制arXiv ID
+                    </button>
+                    <button class="btn btn-outline-info" onclick="exportBibTeX('{{ paper.arxiv_id }}')">
+                        <i class="fas fa-quote-right"></i> 导出BibTeX
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-share"></i> 分享</h6>
+                <div class="btn-group" role="group">
+                    <a href="https://twitter.com/intent/tweet?text={{ paper.title|urlencode }}&url=https://arxiv.org/abs/{{ paper.arxiv_id }}"
+                       target="_blank" class="btn btn-outline-primary">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="mailto:?subject={{ paper.title|urlencode }}&body=Check out this paper: https://arxiv.org/abs/{{ paper.arxiv_id }}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        alert('已复制到剪贴板: ' + text);
+    });
+}
+
+function exportBibTeX(arxivId) {
+    // 这里可以添加BibTeX导出功能
+    alert('BibTeX导出功能待实现');
+}
+</script>
+{% endblock %}

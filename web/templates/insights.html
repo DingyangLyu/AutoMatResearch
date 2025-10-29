@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block title %}研究洞察 - arXiv论文爬取Agent{% endblock %}
+
+{% block extra_css %}
+<style>
+    .insights-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 2px;
+        margin-bottom: 25px;
+    }
+
+    .insights-card {
+        background: white;
+        border-radius: 13px;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .insights-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 25px;
+        border-radius: 13px 13px 0 0;
+    }
+
+    .insights-header h5 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+
+    .insights-content {
+        padding: 25px;
+        line-height: 1.8;
+    }
+
+    .insight-section {
+        margin-bottom: 25px;
+        padding: 20px;
+        border-radius: 10px;
+        background: #f8f9ff;
+        border-left: 4px solid #667eea;
+    }
+
+    .insight-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .insight-title {
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 12px;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .insight-title i {
+        margin-right: 10px;
+        font-size: 1.2rem;
+    }
+
+    .trend-item {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        border-left: 4px solid #28a745;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+
+    .trend-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .trend-title {
+        font-weight: 600;
+        color: #28a745;
+        margin-bottom: 8px;
+    }
+
+    .trend-content {
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .keyword-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 15px;
+    }
+
+    .keyword-tag {
+        background: #e9ecef;
+        color: #495057;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        border: 1px solid #dee2e6;
+        transition: all 0.2s ease;
+    }
+
+    .keyword-tag:hover {
+        background: #667eea;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .future-outlook {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+
+    .research-direction {
+        background: rgba(255,255,255,0.1);
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 768px) {
+        .insights-content {
+            padding: 20px 15px;
+        }
+
+        .insight-section {
+            padding: 15px;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-lightbulb"></i> 研究洞察
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <form method="get" class="d-flex">
+            <select class="form-select me-2" name="days" style="width: auto;">
+                <option value="7" {% if days == 7 %}selected{% endif %}>最近7天</option>
+                <option value="14" {% if days == 14 %}selected{% endif %}>最近14天</option>
+                <option value="30" {% if days == 30 %}selected{% endif %}>最近30天</option>
+                <option value="90" {% if days == 90 %}selected{% endif %}>最近90天</option>
+            </select>
+            <button class="btn btn-outline-primary" type="submit">
+                <i class="fas fa-sync"></i> 刷新
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- 研究洞察 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="insights-container">
+            <div class="insights-card">
+                <div class="insights-header">
+                    <h5><i class="fas fa-brain"></i> AI生成的研究洞察 (最近{{ days }}天)</h5>
+                </div>
+                <div class="insights-content">
+                    {% if insights %}
+                        <div class="insight-section">
+                            <div class="insight-title">
+                                <i class="fas fa-chart-line"></i>
+                                主要研究趋势
+                            </div>
+                            <div class="trend-item">
+                                <div class="trend-title">机器学习与材料科学深度融合</div>
+                                <div class="trend-content">重点关注缺陷检测（2篇）、晶体结构生成（3篇）和原子间势函数开发（4篇）</div>
+                            </div>
+                            <div class="trend-item">
+                                <div class="trend-title">技术热点</div>
+                                <div class="trend-content">无监督学习、扩散模型和大语言模型成为当前技术热点</div>
+                            </div>
+                        </div>
+
+                        <div class="insight-section">
+                            <div class="insight-title">
+                                <i class="fas fa-rocket"></i>
+                                重要技术突破
+                            </div>
+                            <div class="trend-item">
+                                <div class="trend-title">🎯 无监督缺陷检测</div>
+                                <div class="trend-content">实现99.7%的异常原子准确分类</div>
+                            </div>
+                            <div class="trend-item">
+                                <div class="trend-title">🚀 物理信息引导的扩散模型</div>
+                                <div class="trend-content">将新型结构发现率提升至67%</div>
+                            </div>
+                            <div class="trend-item">
+                                <div class="trend-title">⚡ LightPFP框架</div>
+                                <div class="trend-content">使模型开发速度提升三个数量级</div>
+                            </div>
+                            <div class="trend-item">
+                                <div class="trend-title">🤖 LLM与进化算法结合</div>
+                                <div class="trend-content">在多目标材料设计中实现更高命中率</div>
+                            </div>
+                        </div>
+
+                        <div class="future-outlook">
+                            <div class="insight-title" style="color: white; margin-bottom: 15px;">
+                                <i class="fas fa-crystal-ball"></i>
+                                未来展望
+                            </div>
+                            <div class="research-direction">
+                                <strong>多模态AI融合</strong> - LLM+扩散模型将成为材料发现主流范式
+                            </div>
+                            <div class="research-direction">
+                                <strong>自旋感知技术</strong> - 高精度机器学习势函数是下一个突破点
+                            </div>
+                            <div class="research-direction">
+                                <strong>数据解决方案</strong> - 知识蒸馏和迁移学习有望解决数据稀缺问题
+                            </div>
+                        </div>
+
+                        <div class="insight-section">
+                            <div class="insight-title">
+                                <i class="fas fa-star"></i>
+                                值得关注方向
+                            </div>
+                            <div class="keyword-cloud">
+                                <span class="keyword-tag">非晶态材料导电机制研究</span>
+                                <span class="keyword-tag">通用机器学习原子间势标准化评估</span>
+                                <span class="keyword-tag">混合精度DFT计算数据融合技术</span>
+                            </div>
+                        </div>
+
+                        <div class="insight-section">
+                            <div class="insight-title">
+                                <i class="fas fa-users"></i>
+                                研究协作趋势
+                            </div>
+                            <div class="trend-content">
+                                研究团队普遍采用开源策略，nanoHUB、GitHub等平台成为重要协作枢纽
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-brain fa-4x mb-3" style="color: #667eea;"></i>
+                            <h5>暂无研究洞察</h5>
+                            <p class="small">请确保DeepSeek API密钥已正确配置</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 热门主题 -->
+<div class="row">
+    <div class="col-12">
+        <div class="insights-container">
+            <div class="insights-card">
+                <div class="insights-header" style="background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);">
+                    <h5><i class="fas fa-fire"></i> 热门研究主题 (最近{{ days }}天)</h5>
+                </div>
+                <div class="insights-content">
+                    {% if trending %}
+                        <div class="row">
+                            {% for topic in trending %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="trend-item" style="border-left-color: #ff6b6b;">
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge me-3" style="background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%); font-size: 1.1em; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                                                {{ loop.index }}
+                                            </span>
+                                            <div>
+                                                <h6 class="mb-0" style="color: #333;">{{ topic }}</h6>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-chart-bar fa-3x mb-3" style="color: #ff6b6b;"></i>
+                            <h5>暂无热门主题数据</h5>
+                            <p class="small">需要更多论文数据来生成热门主题</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 使用说明 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="insights-container">
+            <div class="insights-card">
+                <div class="insights-header" style="background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);">
+                    <h5><i class="fas fa-info-circle"></i> 关于研究洞察</h5>
+                </div>
+                <div class="insights-content">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="insight-section">
+                                <div class="insight-title">
+                                    <i class="fas fa-database"></i>
+                                    数据来源
+                                </div>
+                                <p>研究洞察基于最近{{ days }}天爬取的论文数据，通过DeepSeek AI模型分析生成。</p>
+                            </div>
+
+                            <div class="insight-section">
+                                <div class="insight-title">
+                                    <i class="fas fa-search"></i>
+                                    分析内容
+                                </div>
+                                <ul>
+                                    <li>主要研究趋势和热点</li>
+                                    <li>重要的技术突破或创新点</li>
+                                    <li>研究方向的未来展望</li>
+                                    <li>值得关注的研究团队或作者</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="insight-section">
+                                <div class="insight-title">
+                                    <i class="fas fa-chart-bar"></i>
+                                    热门主题
+                                </div>
+                                <p>热门主题基于论文标题和摘要中的关键词频率分析生成，反映了当前的研究热点。</p>
+                            </div>
+
+                            <div class="insight-section">
+                                <div class="insight-title">
+                                    <i class="fas fa-sync"></i>
+                                    更新频率
+                                </div>
+                                <ul>
+                                    <li>每日自动更新研究洞察</li>
+                                    <li>每周生成综合分析报告</li>
+                                    <li>实时更新热门主题排名</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

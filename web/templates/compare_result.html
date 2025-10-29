@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}论文比较结果 - arXiv论文爬取Agent{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-balance-scale"></i> 论文比较结果
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('compare') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> 返回比较
+        </a>
+        <a href="{{ url_for('papers') }}" class="btn btn-outline-primary">
+            <i class="fas fa-book"></i> 论文列表
+        </a>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <strong>比较论文：</strong>
+    {% for id in paper_ids %}
+        <span class="badge bg-primary me-2">
+            <a href="https://arxiv.org/abs/{{ id }}" target="_blank" style="color: white; text-decoration: none;">
+                {{ id }}
+            </a>
+        </span>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-chart-line"></i> AI生成的比较分析</h5>
+    </div>
+    <div class="card-body">
+        <div class="bg-light p-4 rounded" style="white-space: pre-line; line-height: 1.6;">
+            {{ comparison }}
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-lightbulb"></i> 分析要点</h6>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li>本分析基于DeepSeek AI对论文内容的深度理解</li>
+                    <li>重点关注方法论的差异和创新点</li>
+                    <li>提供了实用的比较结论和建议</li>
+                    <li>可作为研究参考和决策依据</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-share"></i> 分享结果</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button onclick="copyToClipboard()" class="btn btn-outline-primary">
+                        <i class="fas fa-copy"></i> 复制分析结果
+                    </button>
+                    <button onclick="window.print()" class="btn btn-outline-secondary">
+                        <i class="fas fa-print"></i> 打印结果
+                    </button>
+                    <a href="mailto:?subject=论文比较分析&body={{ comparison|urlencode }}" class="btn btn-outline-info">
+                        <i class="fas fa-envelope"></i> 邮件分享
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard() {
+    const text = document.querySelector('.bg-light').textContent;
+    navigator.clipboard.writeText(text).then(function() {
+        alert('分析结果已复制到剪贴板');
+    });
+}
+</script>
+{% endblock %}

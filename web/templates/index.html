@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - arXiv论文爬取Agent{% endblock %}
+
+{% block extra_css %}
+<style>
+.btn-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.btn-gradient-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+    color: white;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.keyword-tag {
+    margin: 0.25rem;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.keyword-tag:hover {
+    transform: scale(1.05);
+    background-color: #0056b3 !important;
+}
+
+.paper-card {
+    margin-bottom: 1rem;
+    border-left: 4px solid #007bff;
+    transition: all 0.3s ease;
+}
+
+.paper-card:hover {
+    border-left-color: #0056b3;
+    background-color: #f8f9fa;
+}
+
+.status-card .card-body {
+    padding: 1.5rem;
+}
+
+.status-card h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.status-card .card-text {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin: -1rem -15px 2rem -15px;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-weight: 300;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.status-card {
+    transition: all 0.3s ease;
+}
+
+.status-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.icon-holder {
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.status-card:hover .icon-holder {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.paper-meta {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+}
+
+.paper-meta .badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+}
+
+.btn-outline-primary:hover {
+    transform: translateY(-1px);
+}
+
+.btn-outline-info:hover {
+    transform: translateY(-1px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-5">
+                    <i class="fas fa-tachometer-alt me-3"></i>系统概览
+                </h1>
+                <p class="lead mb-0">arXiv论文智能爬取与分析平台</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <form method="post" action="{{ url_for('scrape_more') }}" class="d-inline-block">
+                    <input type="hidden" name="additional_count" value="10">
+                    <button type="submit" class="btn btn-light btn-lg px-4 py-2" onclick="this.form.submit(); this.disabled=true; this.innerHTML='&lt;i class=&quot;fas fa-spinner fa-spin me-2&quot;&gt;&lt;/i&gt;爬取中...';">
+                        <i class="fas fa-download me-2"></i>爬取更多论文
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 状态卡片 -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card status-card bg-gradient-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="card-title mb-1">{{ status.recent_papers_count }}</h3>
+                        <p class="card-text mb-0">
+                            <i class="fas fa-book-open me-2"></i>最近7天论文
+                        </p>
+                    </div>
+                    <div class="icon-holder">
+                        <i class="fas fa-book fa-3x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card status-card bg-gradient-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="card-title mb-1">{{ '运行中' if status.is_running else '已停止' }}</h3>
+                        <p class="card-text mb-0">
+                            <i class="fas fa-play-circle me-2"></i>调度器状态
+                        </p>
+                    </div>
+                    <div class="icon-holder">
+                        <i class="fas fa-clock fa-3x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card status-card bg-gradient-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="card-title mb-1">{{ status.max_papers_per_day }}</h3>
+                        <p class="card-text mb-0">
+                            <i class="fas fa-chart-line me-2"></i>每日最大论文数
+                        </p>
+                    </div>
+                    <div class="icon-holder">
+                        <i class="fas fa-cog fa-3x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card status-card bg-gradient-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="card-title mb-1">{{ keywords|length }}</h3>
+                        <p class="card-text mb-0">
+                            <i class="fas fa-tags me-2"></i>活跃关键词
+                        </p>
+                    </div>
+                    <div class="icon-holder">
+                        <i class="fas fa-tags fa-3x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 系统信息和关键词 -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-server me-2"></i>系统信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <div>
+                                <i class="fas fa-play-circle text-success me-2"></i>
+                                <strong>调度器状态:</strong>
+                            </div>
+                            <span class="badge bg-{{ 'success' if status.is_running else 'secondary' }} fs-6">
+                                {{ '运行中' if status.is_running else '已停止' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <div>
+                                <i class="fas fa-clock text-info me-2"></i>
+                                <strong>下次执行:</strong>
+                            </div>
+                            <span class="text-muted">{{ status.next_run or '未设置' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <div>
+                                <i class="fas fa-calendar-alt text-warning me-2"></i>
+                                <strong>执行时间:</strong>
+                            </div>
+                            <span class="text-muted">{{ status.schedule_time }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <div>
+                                <i class="fas fa-chart-line text-primary me-2"></i>
+                                <strong>最大论文数:</strong>
+                            </div>
+                            <span class="badge bg-primary">{{ status.max_papers_per_day }}/天</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient-info text-white">
+                <h5 class="mb-0"><i class="fas fa-tags me-2"></i>当前关键词</h5>
+            </div>
+            <div class="card-body">
+                {% if keywords %}
+                    <div class="keywords-container mb-3">
+                        {% for keyword in keywords %}
+                            <span class="badge bg-primary keyword-tag">{{ keyword }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">暂无关键词</p>
+                    </div>
+                {% endif %}
+                <div class="text-center">
+                    <a href="{{ url_for('keywords') }}" class="btn btn-primary btn-sm px-3 py-2">
+                        <i class="fas fa-cog me-2"></i>管理关键词
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近论文 -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-gradient-secondary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-book-open me-2"></i>最近论文 (最新5篇)
+            </h5>
+            <span class="badge bg-light text-dark">{{ recent_papers|length if recent_papers else 0 }} 篇</span>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if recent_papers %}
+            {% for paper in recent_papers %}
+                <div class="paper-card card border-0 mb-3 shadow-sm">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6 class="card-title mb-2">
+                                    <a href="https://arxiv.org/abs/{{ paper.arxiv_id }}" target="_blank"
+                                       class="text-decoration-none text-primary">
+                                        <i class="fas fa-external-link-alt me-2 small"></i>
+                                        {{ paper.title[:120] }}{% if paper.title|length > 120 %}...{% endif %}
+                                    </a>
+                                </h6>
+                                <div class="paper-meta mb-2">
+                                    <span class="text-muted small me-3">
+                                        <i class="fas fa-users me-1"></i>
+                                        {{ paper.authors[:2]|join(', ') }}{% if paper.authors|length > 2 %} 等{{ paper.authors|length }}人{% endif %}
+                                    </span>
+                                    <span class="text-muted small me-3">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ paper.published_date }}
+                                    </span>
+                                    <span class="badge bg-info text-white">
+                                        <i class="fas fa-folder me-1"></i>
+                                        {{ paper.categories[:2]|join(', ') }}
+                                    </span>
+                                </div>
+                                {% if paper.summary %}
+                                    <p class="card-text text-muted small mb-2">
+                                        {{ paper.summary[:180] }}{% if paper.summary|length > 180 %}...{% endif %}
+                                    </p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <div class="d-flex flex-column align-items-md-end gap-2">
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-hashtag me-1"></i>{{ paper.arxiv_id }}
+                                    </span>
+                                    <div class="btn-group-sm">
+                                        <a href="https://arxiv.org/pdf/{{ paper.arxiv_id }}.pdf" target="_blank"
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-file-pdf me-1"></i> PDF
+                                        </a>
+                                        <a href="{{ url_for('paper_detail', arxiv_id=paper.arxiv_id) }}"
+                                           class="btn btn-outline-info btn-sm">
+                                            <i class="fas fa-info-circle me-1"></i> 详情
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            <div class="text-center mt-4">
+                <a href="{{ url_for('papers') }}" class="btn btn-primary px-4 py-2">
+                    <i class="fas fa-search me-2"></i>查看更多论文
+                </a>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">暂无论文数据</h5>
+                <p class="text-muted">点击"爬取更多论文"按钮开始获取论文</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

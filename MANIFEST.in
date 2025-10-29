@@ -1,0 +1,38 @@
+# 包含重要的非Python文件
+include README.md
+include LICENSE
+include requirements.txt
+include pyproject.toml
+include .env.example
+include .gitignore
+
+# 包含配置文件
+recursive-include config *.py *.json *.example
+
+# 包含Web资源
+recursive-include web/templates *.html
+recursive-include web/static *
+
+# 包含脚本文件
+recursive-include scripts *.py *.sh *.bat
+
+# 包含文档
+recursive-include docs *.md *.txt *.rst
+
+# 排除不需要的文件
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude .git*
+global-exclude .DS_Store
+global-exclude *.log
+global-exclude *.db
+global-exclude .env
+global-exclude .claude
+
+# 保留空目录
+prune data/database
+prune data/exports
+prune data/insights
+prune logs

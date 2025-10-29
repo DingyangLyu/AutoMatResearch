@@ -1,0 +1,418 @@
+[
+  {
+    "title": "Unsupervised Machine-Learning Pipeline for Data-Driven Defect Detection\n  and Characterisation: Application to Displacement Cascades",
+    "authors": [
+      "Samuel Del Fré",
+      "Andrée de Backer",
+      "Christophe Domain",
+      "Ludovic Thuinet",
+      "Charlotte S. Becquart"
+    ],
+    "abstract": "Neutron irradiation produces, within a few picoseconds, displacement cascades\nthat are sequences of atomic collisions generating point and extended defects\nwhich subsequently affects the long-term evolution of materials. The diversity\nof these defects, characterized morphologically and statistically, defines what\nis called the \"primary damage\". In this work, we present a fully unsupervised\nmachine learning (ML) workflow that detects and classifies these defects\ndirectly from molecular dynamics data. Local environments are encoded by the\nSmooth Overlap of Atomic Positions (SOAP) vector, anomalous atoms are isolated\nwith autoencoder neural networks (AE), embedded with Uniform Manifold\nApproximation and Projection (UMAP) and clustered using Hierarchical\nDensity-Based Spatial Clustering of Applications with Noise (HDBSCAN). Applied\nto 80 keV displacement cascades in Ni, Fe$_7$0Ni$_{10}$Cr$_{20}$, and Zr, the\nAE successfully identify the small fraction of outlier atoms that participate\nin defect formation. HDBSCAN then partitions the UMAP latent space of\nAE-flagged SOAP descriptors into well defined groups representing vacancy- and\ninterstitial-dominated regions and, within each, separates small from large\naggregates, assigning 99.7 % of outliers to compact physical motifs. A signed\ncluster-identification score confirms this separation, and cluster size scales\nwith net defect counts (R2 > 0.89). Statistical cross analyses between the ML\noutlier map and several conventional detectors (centrosymmetry, dislocation\nextraction, etc.) reveal strong overlap and complementary coverage, all\nachieved without template or threshold tuning. This ML workflow thus provides\nan efficient tool for the quantitative mapping of structural anomalies in\nmaterials, particularly those arising from irradiation damage in displacement\ncascades.",
+    "arxiv_id": "2510.24523v1",
+    "published_date": "2025-10-28T15:34:23+00:00",
+    "categories": [
+      "cond-mat.mtrl-sci",
+      "cs.LG"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.24523v1.pdf",
+    "summary": "本文提出了一种完全无监督的机器学习流程，用于从分子动力学数据中自动检测和表征位移级联产生的缺陷。该方法通过以下步骤实现：首先采用SOAP描述符编码原子局部环境；随后利用自编码器神经网络识别异常原子；再通过UMAP进行降维嵌入；最后使用HDBSCAN算法进行聚类分析。\n\n该方法在Ni、Fe70Ni10Cr20和Zr材料的80 keV位移级联实验中表现出色：自编码器成功识别出参与缺陷形成的异常原子；HDBSCAN将UMAP潜在空间划分为明确的空位区和间隙原子区，并能区分大小不同的缺陷团簇，99.7%的异常原子被准确归类。统计验证显示聚类结果与净缺陷数量高度相关（R²>0.89），且与传统检测方法结果高度一致。\n\n主要贡献在于开发了一套无需人工设定模板或阈值的全自动缺陷检测流程，为材料辐照损伤的定量分析提供了有效工具。",
+    "created_at": "2025-10-29T15:47:57"
+  },
+  {
+    "title": "DeFecT-FF: Accelerated Modeling of Defects in Cd-Zn--Te-Se-S Compounds\n  Combining High-Throughput DFT and Machine Learning Force Fields",
+    "authors": [
+      "Md Habibur Rahman",
+      "Arun Mannodi-Kanakkithodi"
+    ],
+    "abstract": "We developed DeFecT-FF, a framework for predicting the energies and\nground-state configurations of native point defects, extrinsic dopants,\nimpurities, and defect complexes in zincblende-phase Cd/Zn-Te/Se/S compounds\nrelevant to CdTe-based solar cells. The framework combines high-throughput DFT\ndata with crystal graph-based machine learning force fields (MLFFs) trained to\nreproduce DFT energies and forces. Alloying at Cd or Te sites offers a route to\ntune the electronic and defect properties of CdTe absorbers for improved solar\nefficiency. Given the vast number of possible defect types, charge states, and\nsymmetry-breaking configurations, traditional DFT approaches are\ncomputationally prohibitive. Our dataset includes GGA-PBE and HSE06-optimized\nstructures for bulk, alloyed, interface, and grain-boundary systems. Using\nactive learning, we expanded the dataset and trained MLFFs to accurately\npredict energies across charge states. The model enabled rapid screening and\ndiscovery of new low-energy defect configurations, validated through HSE06\ncalculations with spin-orbit coupling. The DeFecT-FF framework is publicly\navailable as a nanoHUB tool, allowing users to upload crystallographic files,\nautomatically generate defects, and compute defect formation energies versus\nFermi level and chemical potentials, greatly reducing the need for expensive\nDFT simulations.",
+    "arxiv_id": "2510.23514v1",
+    "published_date": "2025-10-27T16:53:08+00:00",
+    "categories": [
+      "cond-mat.mtrl-sci",
+      "cond-mat.dis-nn"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.23514v1.pdf",
+    "summary": "本文提出DeFecT-FF框架，用于高效预测锌矿结构Cd/Zn-Te/Se/S化合物中点缺陷、掺杂剂及缺陷复合体的能量与基态构型。该框架结合高通量密度泛函理论（DFT）数据和基于晶体图的机器学习力场（MLFF），通过主动学习扩展数据集并训练模型，精确预测不同电荷态下的缺陷能量。针对传统DFT方法计算量巨大的问题，该方法利用GGA-PBE和HSE06优化结构数据，实现了新型低能缺陷构型的快速筛选与发现，并通过自旋轨道耦合HSE06计算验证。研究结果表明，该框架能显著降低对昂贵DFT模拟的依赖，并作为nanoHUB工具公开，支持用户上传晶体文件、自动生成缺陷并计算缺陷形成能。主要贡献在于开发了一种融合DFT与机器学习的高效缺陷建模方法，为CdTe基太阳能电池材料的缺陷调控提供了新途径。",
+    "created_at": "2025-10-29T15:47:57"
+  },
+  {
+    "title": "Physics-informed diffusion models for extrapolating crystal structures\n  beyond known motifs",
+    "authors": [
+      "Andrij Vasylenko",
+      "Federico Ottomano",
+      "Christopher M. Collins",
+      "Rahul Savani",
+      "Matthew S. Dyer",
+      "Matthew J. Rosseinsky"
+    ],
+    "abstract": "Discovering materials with previously unreported crystal frameworks is key to\nachieving transformative functionality. Generative artificial intelligence\noffers a scalable means to propose candidate crystal structures, however\nexisting approaches mainly reproduce decorated variants of established motifs\nrather than uncover new configurations. Here we develop a physics-informed\ndiffusion method, supported by chemically grounded validation protocol, which\nembeds descriptors of compactness and local environment diversity to balance\nphysical plausibility with structural novelty. Conditioning on these metrics\nimproves generative performance across architectures, increasing the fraction\nof structures outside 100 most common prototypes up to 67%. When crystal\nstructure prediction (CSP) is seeded with generative structures, most\ncandidates (97%) are reconstructed by CSP, yielding 145 (66%) low-energy\nframeworks not matching any known prototypes. These results show that while\ngenerative models are not substitutes for CSP, their chemically informed,\ndiversity-guided outputs can enhance CSP efficiency, establishing a practical\ngenerative-CSP synergy for discovery-oriented exploration of chemical space.",
+    "arxiv_id": "2510.23181v1",
+    "published_date": "2025-10-27T10:21:35+00:00",
+    "categories": [
+      "cond-mat.mtrl-sci",
+      "cs.LG"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.23181v1.pdf",
+    "summary": "本文提出了一种基于物理信息的扩散模型，用于生成超越已知晶体结构原型的新型材料框架。传统生成方法主要产生已知结构的变体，难以发现全新构型。本研究通过引入致密性和局域环境多样性描述符，结合化学验证协议，在保证物理合理性的同时提升结构新颖性。该方法在不同模型架构中均显著提高生成性能，使不属于前100种常见原型的结构比例提升至67%。当以生成结构作为晶体结构预测（CSP）的初始样本时，97%的候选结构能被CSP重构，其中66%（145个）为不与任何已知原型匹配的低能框架。研究表明，生成模型虽不能替代CSP，但通过化学信息引导和多样性优化，可有效提升CSP的探索效率，建立了生成模型与CSP协同推进材料发现的新范式。",
+    "created_at": "2025-10-29T15:44:43"
+  },
+  {
+    "title": "Thermal Transport in Ag8TS6 (T= Si, Ge, Sn) Argyrodites: An Integrated\n  Experimental, Quantum-Chemical, and Computational Modelling Study",
+    "authors": [
+      "Joana Bustamante",
+      "Anupama Ghata",
+      "Aakash A. Naik",
+      "Christina Ertural",
+      "Katharina Ueltzen",
+      "Wolfgang G. Zeier",
+      "Janine George"
+    ],
+    "abstract": "Argyrodite-type Ag-based sulfides combine exceptionally low lattice thermal\nand high ionic conductivity, making them promising candidates for\nthermoelectric and solid-state energy applications. In this work, we studied\nAg8TS6 (T= Si, Ge, Sn) argyrodite family by combining chemical-bonding\nanalysis, lattice vibrational properties simulation, and experimental\nmeasurements to investigate their structural and thermal transport properties.\nFurthermore, we propose a two-channel lattice-dynamics model based on\nGr\\\"uneisen-derived phonon lifetimes and compare it to an approach using\nmachine-learned interatomic potentials. Both approaches are able to predict\nthermal conductivity in agreement with experimental lattice thermal\nconductivities along the whole temperature range, highlighting their potential\nsuitability for future high-throughput predictions. Our findings also reveal a\nrelationship between bond heterogeneity arising from weakly bonded Ag+ ions and\noccupied antibonding states in Ag-S and Ag-Ag interactions and strong\nanharmonicity, including large Gr\\\"uneisen parameters, and low sound\nvelocities, which are responsible for the low lattice thermal conductivity of\nAg8SnS6, Ag8GeS6, and Ag8SiS6. We furthermore show that thermal and ionic\nconductivities in all three compounds are independent of each other and can\nlikely be tuned individually.",
+    "arxiv_id": "2510.23133v1",
+    "published_date": "2025-10-27T09:13:38+00:00",
+    "categories": [
+      "cond-mat.mtrl-sci"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.23133v1.pdf",
+    "summary": "本文通过实验测量、量子化学分析与计算模拟相结合的方法，系统研究了Ag8TS6（T=Si、Ge、Sn）系列银基硫族化合物的热输运特性。研究提出并验证了两种晶格动力学模型：基于Grüneisen参数推导的声子寿命双通道模型，以及基于机器学习原子间势函数的计算方法。两种模型均能在全温度范围内准确预测热导率，展现出在高通量预测中的潜力。\n\n研究发现，Ag-S和Ag-Ag相互作用中弱键合Ag+离子导致的键合异质性及占据的反键态，是引起体系强非谐性、高Grüneisen参数和低声速的主要原因，进而导致Ag8SnS6、Ag8GeS6和Ag8SiS6具有极低的晶格热导率。此外，研究还揭示了三类化合物中热导率与离子电导率相互独立，表明二者可分别调控，为热电与固态能源材料的设计提供了重要依据。\n\n（字数：248）",
+    "created_at": "2025-10-29T15:47:57"
+  },
+  {
+    "title": "LightPFP: A Lightweight Route to Ab Initio Accuracy at Scale",
+    "authors": [
+      "Wenwen Li",
+      "Nontawat Charoenphakdee",
+      "Yong-Bin Zhuang",
+      "Ryuhei Okuno",
+      "Yuta Tsuboi",
+      "So Takamoto",
+      "Junichi Ishida",
+      "Ju Li"
+    ],
+    "abstract": "Atomistic simulation methods have evolved through successive computational\nlevels, each building upon more fundamental approaches: from quantum mechanics\nto density functional theory (DFT), and subsequently, to machine learning\ninteratomic potentials (MLIPs). While universal MLIPs (u-MLIPs) offer broad\ntransferability, their computational overhead limits large-scale applications.\nTask-specific MLIPs (ts-MLIPs) achieve superior efficiency but require\nprohibitively expensive DFT data generation for each material system. In this\npaper, we propose LightPFP, a data-efficient knowledge distillation framework.\nInstead of using costly DFT calculations, LightPFP generates a distilled\nts-MLIP by leveraging u-MLIP to generate high-quality training data tailored\nfor specific materials and utilizing a pre-trained light-weight MLIP to further\nenhance data efficiency. Across a broad spectrum of materials, including\nsolid-state electrolytes, high-entropy alloys, and reactive ionic systems,\nLightPFP delivers three orders of magnitude faster model development than\nconventional DFT-based methods, while maintaining accuracy on par with\nfirst-principles predictions. Moreover, the distilled ts-MLIPs further sustain\nthe computational efficiency essential for large-scale molecular dynamics,\nachieving 1-2 orders of magnitude faster inference than u-MLIPs. The framework\nfurther enables efficient precision transfer learning, where systematic errors\nfrom the u-MLIP can be corrected using as few as 10 high-accuracy DFT data\npoints, as demonstrated for MgO melting point prediction. This u-MLIP-driven\ndistillation approach enables rapid development of high-fidelity, efficient\nMLIPs for materials science applications.",
+    "arxiv_id": "2510.23064v1",
+    "published_date": "2025-10-27T06:51:36+00:00",
+    "categories": [
+      "cond-mat.mtrl-sci",
+      "physics.comp-ph",
+      "68T07",
+      " 68T05",
+      " 82C32",
+      "I.6; H.2.8; J.2"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.23064v1.pdf",
+    "summary": "本文提出LightPFP框架，通过知识蒸馏方法解决传统机器学习原子间势（MLIP）在大规模应用中面临的数据生成成本高和计算效率低的问题。该方法的核心贡献在于：利用通用MLIP生成特定材料的高质量训练数据，替代昂贵的密度泛函理论计算，并结合预训练的轻量级MLIP进一步提升数据效率。实验覆盖固态电解质、高熵合金和反应性离子体系等多种材料，结果表明，LightPFP在保持与第一性原理相当的精度下，模型开发速度比传统方法快三个数量级，推理速度比通用MLIP快1-2个数量级。此外，该方法支持高效精度迁移学习，仅需约10个高精度数据点即可修正系统误差，为材料科学应用提供了高保真、高效率的原子模拟解决方案。",
+    "created_at": "2025-10-29T15:47:57"
+  },
+  {
+    "title": "LLM Meets Diffusion: A Hybrid Framework for Crystal Material Generation",
+    "authors": [
+      "Subhojyoti Khastagir",
+      "Kishalay Das",
+      "Pawan Goyal",
+      "Seung-Cheol Lee",
+      "Satadeep Bhattacharjee",
+      "Niloy Ganguly"
+    ],
+    "abstract": "Recent advances in generative modeling have shown significant promise in\ndesigning novel periodic crystal structures. Existing approaches typically rely\non either large language models (LLMs) or equivariant denoising models, each\nwith complementary strengths: LLMs excel at handling discrete atomic types but\noften struggle with continuous features such as atomic positions and lattice\nparameters, while denoising models are effective at modeling continuous\nvariables but encounter difficulties in generating accurate atomic\ncompositions. To bridge this gap, we propose CrysLLMGen, a hybrid framework\nthat integrates an LLM with a diffusion model to leverage their complementary\nstrengths for crystal material generation. During sampling, CrysLLMGen first\nemploys a fine-tuned LLM to produce an intermediate representation of atom\ntypes, atomic coordinates, and lattice structure. While retaining the predicted\natom types, it passes the atomic coordinates and lattice structure to a\npre-trained equivariant diffusion model for refinement. Our framework\noutperforms state-of-the-art generative models across several benchmark tasks\nand datasets. Specifically, CrysLLMGen not only achieves a balanced performance\nin terms of structural and compositional validity but also generates more\nstable and novel materials compared to LLM-based and denoisingbased models\nFurthermore, CrysLLMGen exhibits strong conditional generation capabilities,\neffectively producing materials that satisfy user-defined constraints. Code is\navailable at https://github.com/kdmsit/crysllmgen",
+    "arxiv_id": "2510.23040v1",
+    "published_date": "2025-10-27T06:08:19+00:00",
+    "categories": [
+      "cs.LG",
+      "cond-mat.mtrl-sci",
+      "cs.AI"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.23040v1.pdf",
+    "summary": "本文提出CrysLLMGen混合框架，结合大语言模型（LLM）与扩散模型的优势以解决晶体材料生成中的关键问题。现有方法中，LLM擅长处理离散原子类型但难以建模连续特征，而扩散模型精于连续变量生成却难以保证原子组成的准确性。\n\n该框架采用两阶段生成策略：首先通过微调LLM生成包含原子类型、坐标和晶格参数的中间表示，随后固定原子类型，将坐标与晶格参数输入预训练的等变扩散模型进行精细化修正。实验表明，CrysLLMGen在多个基准任务和数据集上均优于当前最优模型，在结构有效性、组成合理性和材料稳定性方面实现均衡提升，并能生成更具新颖性的材料。此外，该方法展现出优秀的条件生成能力，可有效满足用户定义的约束条件。\n\n代码已开源：https://github.com/kdmsit/crysllmgen",
+    "created_at": "2025-10-29T15:44:43"
+  },
+  {
+    "title": "Benchmarking Universal Machine Learning Interatomic Potentials for\n  Elastic Property Prediction",
+    "authors": [
+      "Pengfei Gao",
+      "Haidi Wang"
+    ],
+    "abstract": "Universal machine learning interatomic potentials have emerged as efficient\ntool for material simulation fields,yet their reliability for elastic property\nprediction remains unclear. Here we present a systematic benchmark of four\nuMLIPs-MatterSim, MACE, SevenNet, and CHGNet-against theoretical data for\nnearly 11,000 elastically stable materials from the Materials Project database.\nThe results show SevenNet achieves the highest accuracy,MACE and MatterSim\nbalance accuracy with efficiency, while CHGNet performs less effectively\noverall. This benchmark establishes a framework for guiding model selection and\nadvancing uMLIPs in mechanical property applications.",
+    "arxiv_id": "2510.22999v1",
+    "published_date": "2025-10-27T04:36:07+00:00",
+    "categories": [
+      "cond-mat.mtrl-sci"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.22999v1.pdf",
+    "summary": "本文系统评估了四种通用机器学习原子间势（uMLIPs）——MatterSim、MACE、SevenNet和CHGNet——在预测材料弹性性能方面的表现。研究基于材料项目数据库中近11,000种弹性稳定材料的理论数据，对这些模型进行了全面基准测试。主要贡献在于构建了一个标准化评估框架，填补了uMLIPs在力学性能应用领域可靠性验证的空白。\n\n研究方法采用大规模数据对比分析，从预测精度和计算效率两个维度对模型性能进行量化评估。实验结果表明，SevenNet在预测精度方面表现最优，而MACE和MatterSim在精度与效率之间取得了良好平衡。相比之下，CHGNet的整体表现相对欠佳。\n\n研究结论为材料模拟领域提供了重要的模型选择依据，同时为uMLIPs在力学性能预测方向的未来发展指明了改进路径。这项工作不仅验证了现有模型的适用性边界，也为新模型的开发建立了可靠的评估标准。",
+    "created_at": "2025-10-29T15:47:57"
+  },
+  {
+    "title": "AQCat25: Unlocking spin-aware, high-fidelity machine learning potentials\n  for heterogeneous catalysis",
+    "authors": [
+      "Omar Allam",
+      "Brook Wander",
+      "Aayush R. Singh"
+    ],
+    "abstract": "Large-scale datasets have enabled highly accurate machine learning\ninteratomic potentials (MLIPs) for general-purpose heterogeneous catalysis\nmodeling. There are, however, some limitations in what can be treated with\nthese potentials because of gaps in the underlying training data. To extend\nthese capabilities, we introduce AQCat25, a complementary dataset of 13.5\nmillion density functional theory (DFT) single point calculations designed to\nimprove the treatment of systems where spin polarization and/or higher fidelity\nare critical. We also investigate methodologies for integrating new datasets,\nsuch as AQCat25, with the broader Open Catalyst 2020 (OC20) dataset to create\nspin-aware models without sacrificing generalizability. We find that directly\ntuning a general model on AQCat25 leads to catastrophic forgetting of the\noriginal dataset's knowledge. Conversely, joint training strategies prove\neffective for improving accuracy on the new data without sacrificing general\nperformance. This joint approach introduces a challenge, as the model must\nlearn from a dataset containing both mixed-fidelity calculations and\nmixed-physics (spin-polarized vs. unpolarized). We show that explicitly\nconditioning the model on this system-specific metadata, for example by using\nFeature-wise Linear Modulation (FiLM), successfully addresses this challenge\nand further enhances model accuracy. Ultimately, our work establishes an\neffective protocol for bridging DFT fidelity domains to advance the predictive\npower of foundational models in catalysis.",
+    "arxiv_id": "2510.22938v1",
+    "published_date": "2025-10-27T02:47:20+00:00",
+    "categories": [
+      "cond-mat.mtrl-sci",
+      "cs.LG"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.22938v1.pdf",
+    "summary": "本文提出AQCat25数据集，包含1350万个自旋极化密度泛函理论单点计算数据，旨在解决传统机器学习原子间势函数在自旋极化体系和高精度计算中的局限性。研究通过将AQCat25与Open Catalyst 2020数据集结合，开发了既能保持通用性又能处理自旋特性的机器学习势函数。实验发现，直接微调现有模型会导致灾难性遗忘，而联合训练策略能有效平衡新旧数据的性能。针对混合精度和混合物理特性数据的挑战，研究提出采用特征线性调制技术对模型进行元数据条件化处理，显著提升了预测精度。最终建立了一套连接不同精度DFT计算域的有效方案，为催化领域的基模型提供了更强的预测能力。",
+    "created_at": "2025-10-29T15:47:57"
+  },
+  {
+    "title": "Machine-Learning-Guided Insights into Solid-Electrolyte Interphase\n  Conductivity: Are Amorphous Lithium Fluorophosphates the Key?",
+    "authors": [
+      "Peichen Zhong",
+      "Kristin A. Persson"
+    ],
+    "abstract": "Despite decades of study, the identity of the dominant \\ce{Li+}-conducting\nphase within the inorganic SEI of Li-ion batteries remains unresolved. While\nthe mosaic model describes LiF/\\ce{Li2O}/\\ce{Li2CO3} nanocrystallites within a\ndisordered matrix, these crystalline phases inherently offer limited ionic\nconductivity. Growing evidence suggests that interfaces, grain boundaries, and\namorphous phases may instead host the primary fast-ion pathways. Motivated by\nmixed-anion electrolyte decomposition products, we combine diffusion-based\ngenerative structure prediction with machine-learning interatomic potentials\n(MLIPs) to interrogate lithium difluorophosphate (\\ce{LiPO2F2}), a key\ndecomposition product of phosphorus- and fluorine-containing electrolytes. We\nidentify a stable crystalline polymorph and, through MLIP-accelerated molecular\ndynamics, show that the amorphous counterpart is more conductive, with\nprojected room-temperature $\\sigma$ $\\approx$ 0.18 mS cm$^{-1}$ and\n$E_\\mathrm{a}$ $\\approx$ 0.40 eV. This enhancement is attributed to structural\ndisorder, which flattens the Li site-energy landscape, and to a low formation\nenergy for Li-interstitial defects, which supplies additional mobile carriers.\nWe present mixed-anion, amorphous Li--P--O--F phases as promising candidates\nfor the \\ce{Li+}-conducting medium of the inorganic SEI, offering a path\nforward for engineering improved battery interfaces.",
+    "arxiv_id": "2510.22912v1",
+    "published_date": "2025-10-27T01:29:28+00:00",
+    "categories": [
+      "cond-mat.mtrl-sci",
+      "physics.comp-ph"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.22912v1.pdf",
+    "summary": "本研究针对锂离子电池固态电解质界面（SEI）中主导锂离子传导的无机组分展开研究。通过结合基于扩散的生成结构预测与机器学习原子间势函数（MLIPs），系统分析了含磷氟电解液分解产物——二氟磷酸锂（LiPO₂F₂）的结构与导电特性。研究发现，虽然存在稳定的晶态多形体，但其非晶态相具有更优异的离子导电性，室温下电导率约0.18 mS cm⁻¹，活化能约0.40 eV。这种导电性提升归因于结构无序化降低了锂位点能量势垒，以及锂间隙缺陷的低形成能提供了更多可迁移载流子。研究提出混合阴离子非晶态Li-P-O-F相有望成为无机SEI中锂离子传导的关键介质，为设计高性能电池界面提供了新方向。",
+    "created_at": "2025-10-29T15:47:57"
+  },
+  {
+    "title": "Accelerating Materials Design via LLM-Guided Evolutionary Search",
+    "authors": [
+      "Nikhil Abhyankar",
+      "Sanchit Kabra",
+      "Saaketh Desai",
+      "Chandan K. Reddy"
+    ],
+    "abstract": "Materials discovery requires navigating vast chemical and structural spaces\nwhile satisfying multiple, often conflicting, objectives. We present LLM-guided\nEvolution for MAterials design (LLEMA), a unified framework that couples the\nscientific knowledge embedded in large language models with chemistry-informed\nevolutionary rules and memory-based refinement. At each iteration, an LLM\nproposes crystallographically specified candidates under explicit property\nconstraints; a surrogate-augmented oracle estimates physicochemical properties;\nand a multi-objective scorer updates success/failure memories to guide\nsubsequent generations. Evaluated on 14 realistic tasks spanning electronics,\nenergy, coatings, optics, and aerospace, LLEMA discovers candidates that are\nchemically plausible, thermodynamically stable, and property-aligned, achieving\nhigher hit-rates and stronger Pareto fronts than generative and LLM-only\nbaselines. Ablation studies confirm the importance of rule-guided generation,\nmemory-based refinement, and surrogate prediction. By enforcing\nsynthesizability and multi-objective trade-offs, LLEMA delivers a principled\npathway to accelerate practical materials discovery.\n  Code: https://github.com/scientific-discovery/LLEMA",
+    "arxiv_id": "2510.22503v1",
+    "published_date": "2025-10-26T02:47:15+00:00",
+    "categories": [
+      "cs.LG",
+      "cond-mat.mtrl-sci",
+      "cs.AI",
+      "cs.NE"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.22503v1.pdf",
+    "summary": "本文提出LLEMA框架，通过结合大语言模型（LLM）与进化算法加速材料设计。该框架的核心贡献在于将LLM中嵌入的科学知识与化学规则及记忆优化机制相融合，形成统一的多目标材料发现方法。具体流程包括：LLM在明确属性约束下生成晶体结构候选；代理模型评估其物理化学性质；多目标评分器更新成功/失败记忆以指导后续迭代。\n\n在电子、能源、涂层等14个实际场景的测试中，LLEMA生成的候选材料在化学合理性、热力学稳定性和属性匹配方面均优于生成模型及纯LLM基线，获得了更高的命中率和帕累托前沿。消融实验验证了规则引导生成、记忆优化和代理预测的关键作用。该研究为兼顾可合成性与多目标权衡的材料发现提供了系统化解决方案。\n\n代码已开源：https://github.com/scientific-discovery/LLEMA",
+    "created_at": "2025-10-29T15:44:43"
+  },
+  {
+    "title": "Reinforcement learning-guided optimization of critical current in\n  high-temperature superconductors",
+    "authors": [
+      "Mouyang Cheng",
+      "Qiwei Wan",
+      "Bowen Yu",
+      "Eunbi Rha",
+      "Michael J Landry",
+      "Mingda Li"
+    ],
+    "abstract": "High-temperature superconductors are essential for next-generation energy and\nquantum technologies, yet their performance is often limited by the critical\ncurrent density ($J_c$), which is strongly influenced by microstructural\ndefects. Optimizing $J_c$ through defect engineering is challenging due to the\ncomplex interplay of defect type, density, and spatial correlation. Here we\npresent an integrated workflow that combines reinforcement learning (RL) with\ntime-dependent Ginzburg-Landau (TDGL) simulations to autonomously identify\noptimal defect configurations that maximize $J_c$. In our framework, TDGL\nsimulations generate current-voltage characteristics to evaluate $J_c$, which\nserves as the reward signal that guides the RL agent to iteratively refine\ndefect configurations. We find that the agent discovers optimal defect\ndensities and correlations in two-dimensional thin-film geometries, enhancing\nvortex pinning and $J_c$ relative to the pristine thin-film, approaching 60\\%\nof theoretical depairing limit with up to 15-fold enhancement compared to\nrandom initialization. This RL-driven approach provides a scalable strategy for\ndefect engineering, with broad implications for advancing HTS applications in\nfusion magnets, particle accelerators, and other high-field technologies.",
+    "arxiv_id": "2510.22424v1",
+    "published_date": "2025-10-25T20:01:33+00:00",
+    "categories": [
+      "cond-mat.mtrl-sci",
+      "cond-mat.supr-con",
+      "cs.LG"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.22424v1.pdf",
+    "summary": "本文提出了一种结合强化学习与含时金兹堡-朗道模拟的自主优化方法，用于提升高温超导体的临界电流密度。针对微观缺陷类型、密度和空间关联性对超导性能的复杂影响，研究团队设计了一个强化学习框架，其中TDGL模拟用于评估临界电流密度，并作为奖励信号指导智能体迭代优化缺陷构型。实验结果表明，该方法在二维薄膜结构中成功发现了最优的缺陷密度与空间关联特性，显著增强了磁通钉扎效应，使临界电流密度相较于原始薄膜大幅提升，最高可达随机初始化方法的15倍，并接近理论退配对极限的60%。该研究为缺陷工程提供了可扩展的优化策略，对推动超导技术在聚变磁体、粒子加速器等强场应用具有重要意义。",
+    "created_at": "2025-10-29T15:47:57"
+  },
+  {
+    "title": "Machine Learning Enables Optimization of Diamond for Quantum\n  Applications",
+    "authors": [
+      "Dane W. deQuilettes",
+      "Eden Price",
+      "Linh M. Pham",
+      "Arthur Kurlej",
+      "Swaroop Vattam",
+      "Alexander Melville",
+      "Tom Osadchy",
+      "Boning Li",
+      "Guoqing Wang",
+      "Collin N. Muniz",
+      "Paola Cappellaro",
+      "Jennifer M. Schloss",
+      "Justin L. Mallek",
+      "Danielle A. Braje"
+    ],
+    "abstract": "Spins in solid-state materials, molecules, and other chemical systems have\nthe potential to impact the fields of quantum sensing, communication,\nsimulation, and computing. In particular, color centers in diamond, such as\nnegatively charged nitrogen vacancy (NV$^-$) and silicon vacancy centers\n(SiV$^-$), are emerging as quantum platforms poised for transition to\ncommercial devices. A key enabler stems from the semiconductor-like platform\nthat can be tailored at the time of growth. The large growth parameter space\nmakes it challenging to use intuition to optimize growth conditions for quantum\nperformance. In this paper, we use supervised machine learning to train\nregression models using different synthesis parameters in over 100 quantum\ndiamond samples. We train models to optimize NV$^-$ defects in diamond for high\nsensitivity magnetometry. Importantly, we utilize a magnetic-field sensitivity\nfigure of merit (FOM) for NV magnetometry and use Bayesian optimization to\nidentify critical growth parameters that lead to a 300% improvement over an\naverage sample and a 55% improvement over the previous champion sample.\nFurthermore, using Shapley importance rankings, we gain new physical insights\ninto the most impactful growth and post-processing parameters, namely electron\nirradiation dose, diamond seed depth relative to the plasma, seed miscut angle,\nand reactor nitrogen concentration. As various quantum devices can have\nsignificantly different material requirements, advanced growth techniques such\nas plasma-enhanced chemical vapor deposition (PE-CVD) can provide the ability\nto tailor material development specifically for quantum applications.",
+    "arxiv_id": "2510.22121v1",
+    "published_date": "2025-10-25T02:14:19+00:00",
+    "categories": [
+      "cond-mat.mtrl-sci",
+      "quant-ph"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.22121v1.pdf",
+    "summary": "本文提出了一种基于机器学习优化金刚石中氮空位（NV$^-$）色心性能的方法，旨在提升量子磁强计的灵敏度。针对传统方法难以在庞大的生长参数空间中优化量子性能的难题，研究团队通过监督学习对100多个量子金刚石样本的合成参数进行回归建模，并引入磁强计灵敏度的评价指标，结合贝叶斯优化算法识别关键生长参数。实验结果表明，该方法使样品磁强计灵敏度较平均水平提升300%，较最优历史样本提升55%。通过沙普利重要性分析，研究揭示了电子辐照剂量、金刚石籽晶在等离子体中的深度、籽晶偏切角及反应器氮浓度等关键参数对量子性能的显著影响。该研究不仅为量子器件的材料定制提供了高效优化路径，还深化了对等离子体增强化学气相沉积（PE-CVD）工艺的物理认知，推动了金刚石量子平台向实用化器件的发展。",
+    "created_at": "2025-10-29T15:47:57"
+  },
+  {
+    "title": "Identification of 2D colloidal assemblies in images: a threshold\n  processing method versus machine learning",
+    "authors": [
+      "L. T. Khusainova",
+      "K. S. Kolegov"
+    ],
+    "abstract": "This paper is devoted to the problem of identification of colloidal\nassemblies using the example of two-dimensional coatings (monolayer\nassemblies). Colloidal systems are used in various fields of science and\ntechnology, for example, in applications for photonics and functional coatings.\nThe physical properties depend on the morphology of the structure of the\ncolloidal assemblies. Therefore, effective identification of particle\nassemblies is of interest. The following classification is considered here:\nisolated particles, dimers, chains and clusters. We have studied and compared\ntwo identification methods: image threshold analysis using the OpenCV library\nand machine learning using the YOLOv8 model as an example. The features and\ncurrent results of training a neural network model on a dataset specially\nprepared for this work are described. A comparative characteristic of both\nmethods is given. The best result was shown by the machine learning method (97%\naccuracy). The threshold processing method showed an accuracy of about 68%. The\ndeveloped algorithms and software modules may be useful to scientists and\nengineers working in the field of materials science in the future.",
+    "arxiv_id": "2510.21634v1",
+    "published_date": "2025-10-24T16:41:05+00:00",
+    "categories": [
+      "cond-mat.soft"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.21634v1.pdf",
+    "summary": "本文针对二维胶体组装体的识别问题，比较了阈值处理与机器学习两种方法。胶体系统的物理性质与其结构形态密切相关，因此准确识别孤立颗粒、二聚体、链状结构和团簇等组装形态具有重要意义。\n\n研究采用OpenCV库进行图像阈值分析，并与基于YOLOv8模型的机器学习方法进行对比。通过专门构建的数据集训练神经网络模型，详细描述了模型训练特征与结果。实验表明，机器学习方法达到97%的准确率，显著优于阈值处理方法68%的准确率。\n\n结论指出，基于YOLOv8的机器学习方法在胶体组装体识别任务中表现更优。本研究开发的算法和软件模块可为材料科学领域的科研人员提供有效的分析工具，特别适用于光子学和功能涂层等应用场景中的胶体结构表征。",
+    "created_at": "2025-10-29T15:47:57"
+  },
+  {
+    "title": "M-GLC: Motif-Driven Global-Local Context Graphs for Few-shot Molecular\n  Property Prediction",
+    "authors": [
+      "Xiangyang Xu",
+      "Hongyang Gao"
+    ],
+    "abstract": "Molecular property prediction (MPP) is a cornerstone of drug discovery and\nmaterials science, yet conventional deep learning approaches depend on large\nlabeled datasets that are often unavailable. Few-shot Molecular property\nprediction (FSMPP) addresses this scarcity by incorporating relational\ninductive bias through a context graph that links molecule nodes to property\nnodes, but such molecule-property graphs offer limited structural guidance. We\npropose a comprehensive solution: Motif Driven Global-Local Context Graph for\nfew-shot molecular property prediction, which enriches contextual information\nat both the global and local levels. At the global level, chemically meaningful\nmotif nodes representing shared substructures, such as rings or functional\ngroups, are introduced to form a global tri-partite heterogeneous graph,\nyielding motif-molecule-property connections that capture long-range\ncompositional patterns and enable knowledge transfer among molecules with\ncommon motifs. At the local level, we build a subgraph for each node in the\nmolecule-property pair and encode them separately to concentrate the model's\nattention on the most informative neighboring molecules and motifs. Experiments\non five standard FSMPP benchmarks demonstrate that our framework consistently\noutperforms state-of-the-art methods. These results underscore the\neffectiveness of integrating global motif knowledge with fine-grained local\ncontext to advance robust few-shot molecular property prediction.",
+    "arxiv_id": "2510.21088v1",
+    "published_date": "2025-10-24T02:00:41+00:00",
+    "categories": [
+      "cs.LG",
+      "cs.AI"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.21088v1.pdf",
+    "summary": "本文提出M-GLC框架，用于解决小样本分子性质预测中数据稀缺问题。其主要贡献在于构建了基于化学基元的全局-局部上下文图，从两个层面增强模型对分子结构的理解。\n\n在全局层面，引入具有化学意义的基元节点（如环状结构、官能团），构建包含基元-分子-性质的三部异质图，从而捕捉长程组成模式并促进具有共同基元的分子间知识迁移。在局部层面，为每个分子-性质对构建子图并分别编码，使模型聚焦于最具信息量的邻近分子与基元。\n\n实验在五个标准小样本分子性质预测基准上进行，结果表明M-GLC框架持续优于现有最优方法，验证了融合全局基元知识与细粒度局部上下文对提升小样本预测鲁棒性的有效性。该方法为药物发现和材料科学中的分子性质预测提供了新思路。",
+    "created_at": "2025-10-29T15:44:43"
+  },
+  {
+    "title": "XDXD: End-to-end crystal structure determination with low resolution\n  X-ray diffraction",
+    "authors": [
+      "Jiale Zhao",
+      "Cong Liu",
+      "Yuxuan Zhang",
+      "Chengyue Gong",
+      "Zhenyi Zhang",
+      "Shifeng Jin",
+      "Zhenyu Liu"
+    ],
+    "abstract": "Determining crystal structures from X-ray diffraction data is fundamental\nacross diverse scientific fields, yet remains a significant challenge when data\nis limited to low resolution. While recent deep learning models have made\nbreakthroughs in solving the crystallographic phase problem, the resulting\nlow-resolution electron density maps are often ambiguous and difficult to\ninterpret. To overcome this critical bottleneck, we introduce XDXD, to our\nknowledge, the first end-to-end deep learning framework to determine a complete\natomic model directly from low-resolution single-crystal X-ray diffraction\ndata. Our diffusion-based generative model bypasses the need for manual map\ninterpretation, producing chemically plausible crystal structures conditioned\non the diffraction pattern. We demonstrate that XDXD achieves a 70.4\\% match\nrate for structures with data limited to 2.0~\\AA{} resolution, with a\nroot-mean-square error (RMSE) below 0.05. Evaluated on a benchmark of 24,000\nexperimental structures, our model proves to be robust and accurate.\nFurthermore, a case study on small peptides highlights the model's potential\nfor extension to more complex systems, paving the way for automated structure\nsolution in previously intractable cases.",
+    "arxiv_id": "2510.17936v1",
+    "published_date": "2025-10-20T15:50:21+00:00",
+    "categories": [
+      "cond-mat.mtrl-sci",
+      "cs.AI",
+      "cs.LG"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.17936v1.pdf",
+    "summary": "本文提出XDXD——首个从低分辨率单晶X射线衍射数据端到端直接生成完整原子模型的深度学习框架。该研究针对现有方法在低分辨率数据下难以解析电子密度图的瓶颈，通过扩散生成模型直接根据衍射图谱生成化学合理的晶体结构，绕过了传统方法中繁琐的人工图谱解析环节。实验表明，在分辨率限制为2.0 Å的数据上，XDXD的结构匹配率达到70.4%，均方根误差低于0.05。基于24,000个实验结构的基准测试验证了模型的鲁棒性与准确性。此外，通过小肽案例研究展示了该框架向更复杂体系扩展的潜力，为以往难以解析的晶体结构提供了自动化解决方案。",
+    "created_at": "2025-10-29T15:44:43"
+  },
+  {
+    "title": "Advancing AI-Driven Analysis in X-ray Absorption Spectroscopy: Spectral\n  Domain Mapping and Universal Models",
+    "authors": [
+      "Nina Cao",
+      "Pavan Ravindra",
+      "Shubha R. Kharel",
+      "Chuntian Cao",
+      "Boyang Li",
+      "Xuance Jiang",
+      "Matthew R. Carbone",
+      "Xiaohui Qu",
+      "Deyu Lu"
+    ],
+    "abstract": "In recent years, rapid progress has been made in developing artificial\nintelligence (AI) and machine learning (ML) methods for x-ray absorption\nspectroscopy (XAS) analysis. Compared to traditional XAS analysis methods,\nAI/ML approaches offer dramatic improvements in efficiency and help eliminate\nhuman bias. To advance this field, we advocate an AI-driven XAS analysis\npipeline that features several inter-connected key building blocks: benchmarks,\nworkflows, databases, and AI/ML models. Specifically, we present two case\nstudies for XAS ML. In the first study, we demonstrate the importance of\nreconciling the discrepancies between simulation and experiment using spectral\ndomain mapping (SDM). Our ML model, which is trained solely on simulated\nspectra, predicts an incorrect oxidation state trend for Ti atoms in a\ncombinatorial zinc titanate film. After transforming the experimental spectra\ninto a simulation-like representation using SDM, the same model successfully\nrecovers the correct oxidation state trend. In the second study, we explore the\ndevelopment of universal XAS ML models that are trained on the entire periodic\ntable, which enables them to leverage common trends across elements. Looking\nahead, we envision that an AI-driven pipeline can unlock the potential of\nreal-time XAS analysis to accelerate scientific discovery.",
+    "arxiv_id": "2510.15167v1",
+    "published_date": "2025-10-16T22:08:12+00:00",
+    "categories": [
+      "cond-mat.mtrl-sci"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.15167v1.pdf",
+    "summary": "本文提出了一种基于人工智能的X射线吸收光谱分析框架，通过构建包含基准测试、工作流程、数据库和机器学习模型的关键模块，推动该领域的高效发展。论文重点展示了两项核心贡献：首先，针对模拟与实验光谱间的差异问题，提出光谱域映射方法，将实验数据转换为模拟特征表示，成功修正了钛酸锌薄膜中钛原子氧化态趋势的误判；其次，开发了基于全周期表训练的通用XAS机器学习模型，能够有效利用跨元素的共同规律。研究表明，AI驱动的方法不仅显著提升了分析效率与准确性，还为实现实时XAS分析以加速科学发现奠定了基础。",
+    "created_at": "2025-10-29T15:44:43"
+  },
+  {
+    "title": "Continuous Uniqueness and Novelty Metrics for Generative Modeling of\n  Inorganic Crystals",
+    "authors": [
+      "Masahiro Negishi",
+      "Hyunsoo Park",
+      "Kinga O. Mastej",
+      "Aron Walsh"
+    ],
+    "abstract": "To address pressing scientific challenges such as climate change,\nincreasingly sophisticated generative artificial intelligence models are being\ndeveloped that can efficiently sample the large chemical space of possible\nfunctional materials. These models can quickly sample new chemical compositions\npaired with crystal structures. They are typically evaluated using uniqueness\nand novelty metrics, which depend on a chosen crystal distance function.\nHowever, the most prevalent distance function has four limitations: it fails to\nquantify the degree of similarity between compounds, cannot distinguish\ncompositional difference and structural difference, lacks Lipschitz continuity\nagainst shifts in atomic coordinates, and results in a uniqueness metric that\nis not invariant against the permutation of generated samples. In this work, we\npropose using two continuous distance functions to evaluate uniqueness and\nnovelty, which theoretically overcome these limitations. Our experiments show\nthat these distances reveal insights missed by traditional distance functions,\nproviding a more reliable basis for evaluating and comparing generative models\nfor inorganic crystals.",
+    "arxiv_id": "2510.12405v2",
+    "published_date": "2025-10-14T11:38:21+00:00",
+    "categories": [
+      "cs.LG",
+      "cond-mat.mtrl-sci",
+      "68T07",
+      "J.2; I.2.0"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.12405v2.pdf",
+    "summary": "本文针对无机晶体生成模型评估中传统距离函数的局限性，提出采用两种连续距离函数来改进独特性与新颖性度量。传统方法存在四大缺陷：无法量化化合物间相似程度、不能区分成分差异与结构差异、对原子坐标变化缺乏利普希茨连续性、以及独特性度量对生成样本排列不具备不变性。\n\n作者通过理论分析证明，所提出的连续距离函数能够克服上述问题，并在实验中验证其有效性。结果表明，新方法能够揭示传统距离函数忽略的重要信息，为无机晶体生成模型的评估与比较提供了更可靠的依据。\n\n这项工作的主要贡献在于建立了更严谨的晶体生成模型评估框架，通过引入数学性质更优的距离度量，提升了生成材料质量评估的准确性和可解释性，对功能材料的高效开发具有重要意义。",
+    "created_at": "2025-10-29T15:44:43"
+  },
+  {
+    "title": "Hydrogen production from blended waste biomass: pyrolysis,\n  thermodynamic-kinetic analysis and AI-based modelling",
+    "authors": [
+      "Sana Kordoghli",
+      "Abdelhakim Settar",
+      "Oumayma Belaati",
+      "Mohammad Alkhatib"
+    ],
+    "abstract": "This work contributes to advancing sustainable energy and waste management\nstrategies by investigating the thermochemical conversion of food-based biomass\nthrough pyrolysis, highlighting the role of artificial intelligence (AI) in\nenhancing process modelling accuracy and optimization efficiency. The main\nobjective is to explore the potential of underutilized biomass resources, such\nas spent coffee grounds (SCG) and date seeds (DS), for sustainable hydrogen\nproduction. Specifically, it aims to optimize the pyrolysis process while\nevaluating the performance of these resources both individually and as blends.\nProximate, ultimate, fibre, TGA/DTG, kinetic, thermodynamic, and Py-Micro GC\nanalyses were conducted for pure DS, SCG, and blends (75% DS - 25% SCG, 50% DS\n- 50% SCG, 25% DS - 75% SCG). Blend 3 offered superior hydrogen yield potential\nbut had the highest activation energy (Ea: 313.24 kJ/mol), while Blend 1\nexhibited the best activation energy value (Ea: 161.75 kJ/mol). The kinetic\nmodelling based on isoconversional methods (KAS, FWO, Friedman) identified KAS\nas the most accurate. These approaches provide a detailed understanding of the\npyrolysis process, with particular emphasis on the integration of artificial\nintelligence. An LSTM model trained with lignocellulosic data predicted TGA\ncurves with exceptional accuracy (R^2: 0.9996-0.9998).",
+    "arxiv_id": "2510.15960v1",
+    "published_date": "2025-10-11T15:51:41+00:00",
+    "categories": [
+      "cs.LG",
+      "cond-mat.mtrl-sci"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.15960v1.pdf",
+    "summary": "本文研究了基于食物废弃生物质（咖啡渣和椰枣籽）热解转化的可持续制氢技术，结合热力学-动力学分析与人工智能建模方法，旨在提升过程建模精度与优化效率。研究通过工业分析、组分分析、热重分析、动力学与热力学参数测定等手段，系统评估了单一原料及不同比例混合物的热解特性。结果表明，椰枣籽占比75%的混合样品具有最优活化能（161.75 kJ/mol），而椰枣籽占比25%的混合样品则展现出最高的产氢潜力。在动力学建模方面，KAS方法相较于FWO和Friedman方法表现出更高准确性。研究进一步引入基于木质纤维素数据训练的LSTM神经网络模型，实现了对热重曲线的极精准预测（R²达0.9996–0.9998）。该工作为废弃生物质资源的高效能源化利用提供了数据支撑与智能建模新途径，对可持续能源开发与废弃物管理具有积极意义。",
+    "created_at": "2025-10-29T15:44:43"
+  },
+  {
+    "title": "Reasoning-Enhanced Large Language Models for Molecular Property\n  Prediction",
+    "authors": [
+      "Jiaxi Zhuang",
+      "Yaorui Shi",
+      "Jue Hou",
+      "Yunong He",
+      "Mingwei Ye",
+      "Mingjun Xu",
+      "Yuming Su",
+      "Linfeng Zhang",
+      "Ying Qian",
+      "Linfeng Zhang",
+      "Guolin Ke",
+      "Hengxing Cai"
+    ],
+    "abstract": "Molecular property prediction is crucial for drug discovery and materials\nscience, yet existing approaches suffer from limited interpretability, poor\ncross-task generalization, and lack of chemical reasoning capabilities.\nTraditional machine learning models struggle with task transferability, while\nspecialized molecular language models provide little insight into their\ndecision-making processes. To address these limitations, we propose\n\\textbf{MPPReasoner}, a multimodal large language model that incorporates\nchemical reasoning for molecular property prediction. Our approach, built upon\nQwen2.5-VL-7B-Instruct, integrates molecular images with SMILES strings to\nenable comprehensive molecular understanding. We develop a two-stage training\nstrategy: supervised fine-tuning (SFT) using 16,000 high-quality reasoning\ntrajectories generated through expert knowledge and multiple teacher models,\nfollowed by Reinforcement Learning from Principle-Guided Rewards (RLPGR). RLPGR\nemploys verifiable, rule-based rewards that systematically evaluate chemical\nprinciple application, molecular structure analysis, and logical consistency\nthrough computational verification. Extensive experiments across 8 datasets\ndemonstrate significant performance improvements, with MPPReasoner\noutperforming the best baselines by 7.91\\% and 4.53\\% on in-distribution and\nout-of-distribution tasks respectively. MPPReasoner exhibits exceptional\ncross-task generalization and generates chemically sound reasoning paths that\nprovide valuable insights into molecular property analysis, substantially\nenhancing both interpretability and practical utility for chemists. Code is\navailable at https://anonymous.4open.science/r/MPPReasoner-12687.",
+    "arxiv_id": "2510.10248v2",
+    "published_date": "2025-10-11T15:05:45+00:00",
+    "categories": [
+      "cs.LG",
+      "cs.AI"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.10248v2.pdf",
+    "summary": "本文提出MPPReasoner模型，通过引入化学推理能力解决分子性质预测任务中可解释性差、跨任务泛化能力弱的问题。该模型基于Qwen2.5-VL-7B-Instruct构建，采用多模态架构整合分子图像与SMILES字符串，实现全面的分子表征。\n\n主要贡献包括：1）设计两阶段训练策略，首先使用专家知识和多教师模型生成的16,000条高质量推理轨迹进行监督微调，随后采用基于原则奖励的强化学习（RLPGR）；2）在RLPGR阶段引入可验证的规则奖励机制，系统评估化学原理应用、分子结构分析和逻辑一致性。\n\n实验结果表明，在8个数据集上的测试中，MPPReasoner在分布内和分布外任务上分别以7.91%和4.53%的优势超越最佳基线模型。该模型展现出卓越的跨任务泛化能力，并能生成符合化学原理的推理路径，显著提升了模型的可解释性，为化学研究提供了实用价值。",
+    "created_at": "2025-10-29T15:44:43"
+  },
+  {
+    "title": "Material combination optimization for brazed ceramic-metal composites\n  using Artificial Intelligence",
+    "authors": [
+      "Sunita Khod",
+      "Vinay Kamma",
+      "Ravi Kumar Verma",
+      "Mayank Goswami"
+    ],
+    "abstract": "This study proposes an Artificial Intelligence (AI) driven methodology for\npredicting a combination of brazed ceramic-metal composite materials. Multiple\nmachine learning (ML) algorithms are compared with the deep learning (DL)\nmodel. The developed models are tested using k-fold validation. Nine different\ninput-output feature configurations are evaluated to assess the model\nperformance. The input-output feature comprises material properties, namely,\nthe coefficient of thermal expansion (CTE) and molecular mass of brazed\nceramic-metal composite materials obtained from literature and the strength\nparameter (average Von Mises Stress (VMS)) estimated from Finite Element Method\n(FEM) simulation for joint assembly structure. A multi-output model,\nAutoencoder (AE), has also been developed and tested to predict various\nfeatures. The ML model, namely the polynomial regression (PR), outperforms the\nother ML/DL models with a Mean square Error (MSE) of 0.01 for the test data.\nThe autoencoder model with a 32-16-32 structure outperforms LR, PR, RF, and ANN\nwith an MSE of 0.04% for the prediction of unseen data. The developed\nmulti-output model accurately predicts all the features (single and multiple),\nwhile PR fails to accurately predict multi-output features of low importance.\nThe developed AE model predicts the different material properties with an\naverage error of ~0.16-3.78% with literature-reported values.",
+    "arxiv_id": "2510.10128v1",
+    "published_date": "2025-10-11T09:28:05+00:00",
+    "categories": [
+      "physics.app-ph",
+      "cond-mat.mtrl-sci"
+    ],
+    "pdf_url": "https://arxiv.org/pdf/2510.10128v1.pdf",
+    "summary": "本文提出了一种基于人工智能的钎焊陶瓷-金属复合材料组合优化方法。研究比较了多种机器学习算法与深度学习模型，采用k折交叉验证评估模型性能，并测试了九种输入-输出特征配置。输入特征包括材料热膨胀系数、分子质量等物性参数，输出特征为通过有限元模拟获得的接头结构强度参数（平均冯米塞斯应力）。\n\n主要贡献在于开发了自编码器多输出预测模型，该模型在预测未见数据时表现最优（均方误差0.04%），优于线性回归、多项式回归、随机森林和人工神经网络等传统方法。实验结果表明，多项式回归在单输出预测中表现最佳（测试集均方误差0.01），但在低重要性多输出特征预测中性能下降，而自编码器模型能准确预测所有特征（单输出与多输出），与文献报道值的平均误差仅为0.16-3.78%。该方法为材料组合优化提供了可靠的人工智能解决方案。",
+    "created_at": "2025-10-29T15:44:43"
+  }
+]
