@@ -52,6 +52,19 @@ cp .env.example .env
 # 编辑.env文件，填入你的DeepSeek API密钥
 ```
 
+### 🎯 首次运行
+
+```bash
+# 1. 创建必要目录
+mkdir -p data/{database,exports,logs,insights}
+
+# 2. 运行Web应用
+python run.py --mode web --port 5000
+
+# 3. 访问Web界面
+# 浏览器打开: http://localhost:5000
+```
+
 ### 运行项目
 ```bash
 # 启动命令行界面
