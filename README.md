@@ -30,6 +30,10 @@ install.bat
 # linux环境
 bash install.sh
 # 编辑.env文件，填入你的DeepSeek API密钥
+
+source venv/bin/activate  # Linux/Mac
+# 或 venv\Scripts\activate  # Windows
+
 ```
 
 ### 方式二：克隆仓库并可编辑安装
