@@ -1,7 +1,11 @@
 import sqlite3
+import hashlib
+import logging
 from datetime import datetime
 from typing import List, Optional
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Paper:
@@ -94,6 +98,114 @@ class DatabaseManager:
                 ))
             return papers
 
+    def get_data_hash(self, days: int = 7) -> str:
+        """
+        获取数据的哈希值，用于检测数据变化
+
+        Args:
+            days: 分析的天数
+
+        Returns:
+            数据哈希字符串
+        """
+        import hashlib
+
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT title, authors, abstract, arxiv_id, published_date, categories, summary, created_at
+                FROM papers
+                WHERE created_at >= datetime('now', '-{} days')
+                ORDER BY arxiv_id
+            """.format(days))
+
+            # 获取所有数据并生成哈希
+            all_data = []
+            for row in cursor.fetchall():
+                all_data.append(f"{row[0]}|{row[1]}|{row[2]}|{row[3]}|{row[4]}|{row[5]}|{row[7] if row[7] else 'None'}")
+
+            # 生成MD5哈希
+            content = "|".join(sorted(all_data))
+            return hashlib.md5(content.encode('utf-8')).hexdigest()
+
+    def save_insights_cache(self, cache_key: str, data_hash: str, insights: str, trending: List[str]) -> bool:
+        """
+        保存洞察缓存到数据库
+
+        Args:
+            cache_key: 缓存键
+            data_hash: 数据哈希值
+            insights: 洞察内容
+            trending: 热门主题
+
+        Returns:
+            是否保存成功
+        """
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS insights_cache (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        cache_key TEXT UNIQUE NOT NULL,
+                        data_hash TEXT NOT NULL,
+                        insights TEXT NOT NULL,
+                        trending TEXT NOT NULL,
+                        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+
+                cursor.execute("""
+                    INSERT OR REPLACE INTO insights_cache
+                    (cache_key, data_hash, insights, trending, updated_at)
+                    VALUES (?, ?, ?, ?, datetime('now'))
+                """, (
+                    cache_key,
+                    data_hash,
+                    insights,
+                    ",".join(trending)
+                ))
+                conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"保存洞察缓存失败: {e}")
+            return False
+
+    def get_insights_cache(self, cache_key: str) -> dict:
+        """
+        获取洞察缓存
+
+        Args:
+            cache_key: 缓存键
+
+        Returns:
+            缓存数据字典，包含insights, trending, data_hash等
+        """
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT insights, trending, data_hash, created_at, updated_at
+                    FROM insights_cache
+                    WHERE cache_key = ?
+                """, (cache_key,))
+
+                row = cursor.fetchone()
+                if row:
+                    return {
+                        'insights': row[0],
+                        'trending': row[1].split(',') if row[1] else [],
+                        'data_hash': row[2],
+                        'created_at': row[3],
+                        'updated_at': row[4]
+                    }
+                else:
+                    return {}
+        except Exception as e:
+            logger.error(f"获取洞察缓存失败: {e}")
+            return {}
+
     def search_papers(self, keyword: str) -> List[Paper]:
         """搜索包含关键词的论文"""
         with sqlite3.connect(self.db_path) as conn:
@@ -119,3 +231,53 @@ class DatabaseManager:
                     created_at=datetime.fromisoformat(row[8]) if row[8] else None
                 ))
             return papers
+
+    def get_all_papers(self) -> List[Paper]:
+        """获取所有论文"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT title, authors, abstract, arxiv_id, published_date, categories, pdf_url, summary, created_at
+                FROM papers
+                ORDER BY published_date DESC
+            """)
+
+            papers = []
+            for row in cursor.fetchall():
+                papers.append(Paper(
+                    title=row[0],
+                    authors=row[1].split(','),
+                    abstract=row[2],
+                    arxiv_id=row[3],
+                    published_date=datetime.fromisoformat(row[4]),
+                    categories=row[5].split(','),
+                    pdf_url=row[6],
+                    summary=row[7],
+                    created_at=datetime.fromisoformat(row[8]) if row[8] else None
+                ))
+            return papers
+
+    def get_paper_by_arxiv_id(self, arxiv_id: str) -> Optional[Paper]:
+        """根据arxiv_id获取论文"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT title, authors, abstract, arxiv_id, published_date, categories, pdf_url, summary, created_at
+                FROM papers
+                WHERE arxiv_id = ?
+            """, (arxiv_id,))
+
+            row = cursor.fetchone()
+            if row:
+                return Paper(
+                    title=row[0],
+                    authors=row[1].split(','),
+                    abstract=row[2],
+                    arxiv_id=row[3],
+                    published_date=datetime.fromisoformat(row[4]),
+                    categories=row[5].split(','),
+                    pdf_url=row[6],
+                    summary=row[7],
+                    created_at=datetime.fromisoformat(row[8]) if row[8] else None
+                )
+            return None

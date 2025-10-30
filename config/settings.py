@@ -48,11 +48,11 @@ class Settings:
 
         # 爬取配置
         self.MAX_PAPERS_PER_DAY = int(os.getenv('MAX_PAPERS_PER_DAY', '10'))
-        search_keywords = os.getenv('SEARCH_KEYWORDS', '["machine learning", "deep learning", "artificial intelligence", "neural networks"]')
+        search_keywords = os.getenv('SEARCH_KEYWORDS', '["materials science", "machine learning"]')
         try:
             self.SEARCH_KEYWORDS = json.loads(search_keywords)
         except:
-            self.SEARCH_KEYWORDS = ["machine learning", "deep learning", "artificial intelligence", "neural networks"]
+            self.SEARCH_KEYWORDS = ["materials science", "machine learning"]
 
         # 日志配置
         self.LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
@@ -76,6 +76,11 @@ class Settings:
     def log_file_path(self) -> Path:
         """获取日志文件完整路径"""
         return LOGS_DIR / self.LOG_FILE
+
+    @property
+    def logs_dir(self) -> Path:
+        """获取日志目录路径"""
+        return LOGS_DIR
 
     @property
     def database_path(self) -> str:

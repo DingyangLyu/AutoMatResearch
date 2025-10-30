@@ -9,8 +9,13 @@ logger = logging.getLogger(__name__)
 class ConfigManager:
     """配置文件管理器"""
 
-    def __init__(self, config_file: str = "user_config.json"):
-        self.config_file = config_file
+    def __init__(self, config_file: str = None):
+        if config_file is None:
+            from pathlib import Path
+            # 项目根目录
+            PROJECT_ROOT = Path(__file__).parent.parent.parent
+            config_file = PROJECT_ROOT / "config" / "user_config.json"
+        self.config_file = str(config_file)
         self.config = self._load_config()
 
     def _load_config(self) -> Dict[str, Any]:
@@ -28,7 +33,7 @@ class ConfigManager:
     def _get_default_config(self) -> Dict[str, Any]:
         """获取默认配置"""
         return {
-            "keywords": ["machine learning", "deep learning", "artificial intelligence"],
+            "keywords": ["materials science", "machine learning"],
             "max_papers_per_day": 10,
             "schedule_time": "09:00",
             "auto_summarize": True,
@@ -62,6 +67,10 @@ class ConfigManager:
         self.save_config()
         logger.info(f"设置 {key} 已更新为: {value}")
 
+    def update_config(self, key: str, value: Any):
+        """更新配置（update_setting的别名）"""
+        self.update_setting(key, value)
+
 class PaperExporter:
     """论文导出工具"""
 
@@ -73,8 +82,13 @@ class PaperExporter:
         if filename is None:
             filename = f"papers_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
-        os.makedirs("exports", exist_ok=True)
-        filepath = f"exports/{filename}"
+        # 使用data目录下的exports文件夹
+        from pathlib import Path
+        project_root = Path(__file__).parent.parent.parent
+        exports_dir = project_root / "data" / "exports"
+
+        os.makedirs(exports_dir, exist_ok=True)
+        filepath = exports_dir / filename
 
         papers_data = []
         for paper in papers:
@@ -93,8 +107,8 @@ class PaperExporter:
         try:
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(papers_data, f, indent=2, ensure_ascii=False)
-            logger.info(f"论文已导出到: {filepath}")
-            return filepath
+            logger.info(f"论文已导出到: {str(filepath)}")
+            return str(filepath)
         except Exception as e:
             logger.error(f"导出JSON文件失败: {e}")
             return None
@@ -104,8 +118,13 @@ class PaperExporter:
         if filename is None:
             filename = f"papers_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
 
-        os.makedirs("exports", exist_ok=True)
-        filepath = f"exports/{filename}"
+        # 使用data目录下的exports文件夹
+        from pathlib import Path
+        project_root = Path(__file__).parent.parent.parent
+        exports_dir = project_root / "data" / "exports"
+
+        os.makedirs(exports_dir, exist_ok=True)
+        filepath = exports_dir / filename
 
         try:
             with open(filepath, 'w', encoding='utf-8') as f:
@@ -128,10 +147,66 @@ class PaperExporter:
                     f.write(f"**原始摘要**:\n{paper.abstract}\n\n")
                     f.write("---\n\n")
 
-            logger.info(f"论文已导出到: {filepath}")
-            return filepath
+            logger.info(f"论文已导出到: {str(filepath)}")
+            return str(filepath)
         except Exception as e:
             logger.error(f"导出Markdown文件失败: {e}")
+            return None
+
+    def export_to_bibtex(self, papers: List, filename: str = None) -> str:
+        """导出论文到BibTeX文件"""
+        if filename is None:
+            filename = f"papers_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.bib"
+
+        # 使用data目录下的exports文件夹
+        from pathlib import Path
+        project_root = Path(__file__).parent.parent.parent
+        exports_dir = project_root / "data" / "exports"
+
+        os.makedirs(exports_dir, exist_ok=True)
+        filepath = exports_dir / filename
+
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write("% arXiv论文导出 - BibTeX格式\n")
+                f.write(f"% 导出时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"% 论文数量: {len(papers)}\n\n")
+
+                for paper in papers:
+                    # 生成BibTeX key (第一作者的姓氏 + 年份 + 标题关键词)
+                    first_author_lastname = paper.authors[0].split()[-1] if paper.authors else "Unknown"
+                    year = paper.published_date.year if paper.published_date else datetime.now().year
+                    title_words = paper.title.split()[:3]  # 取标题前3个词
+                    title_key = ''.join([word.strip('.,!?;:') for word in title_words])
+                    bibtex_key = f"{first_author_lastname}{year}{title_key}"
+
+                    # 清理并格式化数据
+                    title = paper.title.replace('{', '\\{').replace('}', '\\}').replace('&', '\\&')
+                    authors = ' and '.join(paper.authors)
+                    abstract = paper.abstract.replace('{', '\\{').replace('}', '\\}').replace('\n', ' ')
+
+                    # 写入BibTeX条目
+                    f.write(f"@misc{{{bibtex_key},\n")
+                    f.write(f"  title = {{{title}}},\n")
+                    f.write(f"  author = {{{authors}}},\n")
+                    f.write(f"  year = {{{year}}},\n")
+                    f.write(f"  eprint = {{{paper.arxiv_id}}},\n")
+                    f.write(f"  archivePrefix = {{arXiv}},\n")
+                    f.write(f"  primaryClass = {{{paper.categories[0] if paper.categories else 'cs.AI'}}},\n")
+
+                    # 添加摘要（如果有）
+                    if abstract:
+                        f.write(f"  abstract = {{{abstract}}},\n")
+
+                    # 添加PDF URL
+                    f.write(f"  url = {{{paper.pdf_url}}},\n")
+                    f.write(f"  howpublished = {{arXiv:{paper.arxiv_id}}}\n")
+                    f.write("}\n\n")
+
+            logger.info(f"论文已导出到: {str(filepath)}")
+            return str(filepath)
+        except Exception as e:
+            logger.error(f"导出BibTeX文件失败: {e}")
             return None
 
 class NotificationManager:

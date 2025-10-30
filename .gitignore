@@ -73,8 +73,8 @@ Thumbs.db
 # Project specific
 arxiv_papers.db
 *.log
-logs/*
-exports/*
+data/logs/*
+data/exports/*
 insights/*
 .pytest_cache/
 

@@ -5,6 +5,7 @@ from typing import List, Optional
 from urllib.parse import quote
 import logging
 import sys
+import re
 from pathlib import Path
 
 # 添加项目根目录到Python路径
@@ -19,7 +20,102 @@ logger = logging.getLogger(__name__)
 class ArxivScraper:
     def __init__(self):
         self.base_url = "http://export.arxiv.org/api/query"
+        self.arxiv_base_url = "https://arxiv.org/abs/"
         self.db = DatabaseManager(settings.database_path)
+        # 设置请求头，模拟浏览器
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+
+    def get_submission_date_from_page(self, arxiv_id: str) -> Optional[datetime]:
+        """
+        从arXiv详情页面获取准确的提交日期
+
+        Args:
+            arxiv_id: arXiv论文ID
+
+        Returns:
+            提交日期datetime对象，如果获取失败返回None
+        """
+        try:
+            url = f"{self.arxiv_base_url}{arxiv_id}"
+            response = requests.get(url, headers=self.headers, timeout=10)
+            response.raise_for_status()
+
+            # 使用正则表达式查找 "Submitted on" 日期
+            # 匹配模式：Submitted on [day] [month] [year]
+            patterns = [
+                r'Submitted on (\d{1,2})\s+(\w+)\s+(\d{4})',
+                r'Submitted\s+(\d{1,2})\s+(\w+)\s+(\d{4})',
+                r'(\d{1,2})\s+(\w+)\s+(\d{4})\s*\(Submitted',
+            ]
+
+            for pattern in patterns:
+                matches = re.findall(pattern, response.text, re.IGNORECASE)
+                if matches:
+                    day, month_str, year = matches[0]
+
+                    # 月份映射
+                    month_map = {
+                        'january': 1, 'jan': 1,
+                        'february': 2, 'feb': 2,
+                        'march': 3, 'mar': 3,
+                        'april': 4, 'apr': 4,
+                        'may': 5,
+                        'june': 6, 'jun': 6,
+                        'july': 7, 'jul': 7,
+                        'august': 8, 'aug': 8,
+                        'september': 9, 'sep': 9, 'sept': 9,
+                        'october': 10, 'oct': 10,
+                        'november': 11, 'nov': 11,
+                        'december': 12, 'dec': 12
+                    }
+
+                    month = month_map.get(month_str.lower())
+                    if month:
+                        submission_date = datetime(int(year), month, int(day))
+                        logger.info(f"从arXiv页面获取提交日期: {arxiv_id} -> {submission_date.strftime('%Y-%m-%d')}")
+                        return submission_date
+                    else:
+                        logger.warning(f"无法解析月份: {month_str}")
+
+            # 如果正则表达式没找到，尝试查找其他日期模式
+            # 查找页面中的任何日期信息作为备选
+            date_patterns = [
+                r'(\d{4}-\d{2}-\d{2})',  # YYYY-MM-DD
+                r'(\d{1,2}/\d{1,2}/\d{4})',  # MM/DD/YYYY
+            ]
+
+            for pattern in date_patterns:
+                matches = re.findall(pattern, response.text)
+                if matches:
+                    # 取第一个匹配的日期
+                    date_str = matches[0]
+                    if '-' in date_str:  # YYYY-MM-DD格式
+                        try:
+                            submission_date = datetime.strptime(date_str, '%Y-%m-%d')
+                            logger.info(f"从arXiv页面获取日期(备选): {arxiv_id} -> {submission_date.strftime('%Y-%m-%d')}")
+                            return submission_date
+                        except ValueError:
+                            continue
+                    elif '/' in date_str:  # MM/DD/YYYY格式
+                        try:
+                            month, day, year = date_str.split('/')
+                            submission_date = datetime(int(year), int(month), int(day))
+                            logger.info(f"从arXiv页面获取日期(备选): {arxiv_id} -> {submission_date.strftime('%Y-%m-%d')}")
+                            return submission_date
+                        except ValueError:
+                            continue
+
+            logger.warning(f"无法从arXiv页面找到提交日期: {arxiv_id}")
+            return None
+
+        except requests.RequestException as e:
+            logger.error(f"请求arXiv页面失败 {arxiv_id}: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"解析arXiv页面时出错 {arxiv_id}: {e}")
+            return None
 
     def search_papers(self, keywords: List[str], max_results: int = 10, days_back: int = 7) -> List[Paper]:
         """
@@ -101,18 +197,87 @@ class ArxivScraper:
             # 提取arXiv ID
             arxiv_id = entry.id.split('/')[-1]
 
-            # 提取发布日期
-            published_date = datetime.now()
-            if hasattr(entry, 'published'):
-                if isinstance(entry.published, str):
-                    published_date = datetime.fromisoformat(entry.published.replace('Z', '+00:00'))
-                else:
-                    published_date = entry.published
-            elif hasattr(entry, 'updated'):
-                if isinstance(entry.updated, str):
-                    published_date = datetime.fromisoformat(entry.updated.replace('Z', '+00:00'))
-                else:
-                    published_date = entry.updated
+            # 提取发布日期 - 优先从arXiv详情页面获取准确的提交日期
+            published_date = None
+
+            # 方法1: 从arXiv详情页面获取准确的提交日期（最准确）
+            try:
+                page_date = self.get_submission_date_from_page(arxiv_id)
+                if page_date:
+                    published_date = page_date
+                    logger.info(f"从arXiv页面获取准确提交日期: {arxiv_id} -> {published_date.strftime('%Y-%m-%d')}")
+            except Exception as e:
+                logger.warning(f"从arXiv页面获取日期失败 {arxiv_id}: {e}")
+
+            # 方法2: 如果页面获取失败，尝试从arXiv ID解析年月信息
+            if published_date is None:
+                try:
+                    # arXiv ID格式: YYMM.xxxxxx 或 YYMM.Nxxxxx
+                    arxiv_parts = arxiv_id.split('.')
+                    if len(arxiv_parts) > 0:
+                        date_part = arxiv_parts[0]
+                        if len(date_part) == 4 and date_part.isdigit():
+                            year = 2000 + int(date_part[:2])
+                            month = int(date_part[2:4])
+                            published_date = datetime(year, month, 1)
+                            logger.info(f"从arXiv ID解析发表日期: {arxiv_id} -> {published_date.strftime('%Y-%m-%d')}")
+                except (ValueError, IndexError) as e:
+                    logger.warning(f"无法从arXiv ID解析日期 {arxiv_id}: {e}")
+
+            # 方法3: 如果上述方法都失败，尝试从API字段获取
+            if published_date is None:
+                logger.warning(f"无法获取准确日期，尝试从API字段获取日期: {arxiv_id}")
+
+                # 检查是否有更详细的发布信息
+                if hasattr(entry, 'published'):
+                    try:
+                        if isinstance(entry.published, str):
+                            # 处理带时区的日期字符串
+                            if 'T' in entry.published:
+                                api_date = datetime.fromisoformat(entry.published.replace('Z', '+00:00'))
+                            else:
+                                # 处理简化的日期格式
+                                api_date = datetime.strptime(entry.published, '%Y-%m-%d')
+                        else:
+                            api_date = entry.published
+
+                        # 检查API日期是否合理（不应该太接近当前时间）
+                        now = datetime.now()
+                        if (now - api_date).days > 1:  # 如果API日期至少比当前时间早1天
+                            published_date = api_date
+                            logger.info(f"使用API发布日期: {arxiv_id} -> {published_date.strftime('%Y-%m-%d')}")
+                        else:
+                            logger.warning(f"API发布日期过于接近当前时间，可能不准确: {api_date}")
+                    except (ValueError, AttributeError) as e:
+                        logger.warning(f"无法解析发布日期 {entry.published}: {e}")
+
+                # 如果published字段不可用，尝试updated字段
+                if published_date is None and hasattr(entry, 'updated'):
+                    try:
+                        if isinstance(entry.updated, str):
+                            # 处理带时区的日期字符串
+                            if 'T' in entry.updated:
+                                api_date = datetime.fromisoformat(entry.updated.replace('Z', '+00:00'))
+                            else:
+                                # 处理简化的日期格式
+                                api_date = datetime.strptime(entry.updated, '%Y-%m-%d')
+                        else:
+                            api_date = entry.updated
+
+                        # 检查API日期是否合理
+                        now = datetime.now()
+                        if (now - api_date).days > 1:
+                            published_date = api_date
+                            logger.info(f"使用API更新日期: {arxiv_id} -> {published_date.strftime('%Y-%m-%d')}")
+                        else:
+                            logger.warning(f"API更新日期过于接近当前时间，可能不准确: {api_date}")
+                    except (ValueError, AttributeError) as e:
+                        logger.warning(f"无法解析更新日期 {entry.updated}: {e}")
+
+            # 最后的备选方案：使用当前时间（但这应该很少发生）
+            if published_date is None:
+                logger.error(f"所有方法都无法确定论文 {arxiv_id} 的发布日期，使用当前时间")
+                published_date = datetime.now()
 
             # 构建PDF URL
             pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"

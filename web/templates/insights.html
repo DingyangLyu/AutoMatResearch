@@ -167,14 +167,60 @@
             grid-template-columns: 1fr;
         }
     }
+
+    /* 状态指示器样式 */
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    .status-dot.loading {
+        background: #ffc107;
+        animation: pulse 1.5s infinite;
+    }
+
+    .status-dot.cached {
+        background: #28a745;
+    }
+
+    .status-dot.error {
+        background: #dc3545;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .loading-spinner {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">
-        <i class="fas fa-lightbulb"></i> 研究洞察
-    </h1>
+    <div class="d-flex align-items-center">
+        <h1 class="h2 me-4">
+            <i class="fas fa-lightbulb"></i> 研究洞察
+        </h1>
+        <!-- 状态指示器 -->
+        <div id="status-indicator" class="d-flex align-items-center gap-2" style="display: none;">
+            <div id="status-dot" class="status-dot"></div>
+            <span id="status-text" class="text-muted small"></span>
+        </div>
+    </div>
     <div class="btn-toolbar mb-2 mb-md-0">
         <form method="get" class="d-flex">
             <select class="form-select me-2" name="days" style="width: auto;">
@@ -386,4 +432,24 @@
         </div>
     </div>
 </div>
+
+<script>
+// 简化的洞察页面脚本
+console.log('洞察页面加载完成');
+
+// 页面加载完成后的简单初始化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM加载完成');
+
+    // 显示简单的状态信息
+    const statusIndicator = document.getElementById('status-indicator');
+    if (statusIndicator) {
+        statusIndicator.style.display = 'flex';
+        const statusText = document.getElementById('status-text');
+        if (statusText) {
+            statusText.textContent = '洞察页面已加载';
+        }
+    }
+});
+</script>
 {% endblock %}

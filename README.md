@@ -140,7 +140,7 @@ DATABASE_URL=sqlite:///data/database/arxiv_papers.db
 
 # 爬取配置
 MAX_PAPERS_PER_DAY=10
-SEARCH_KEYWORDS=["machine learning", "deep learning", "artificial intelligence", "neural networks"]
+SEARCH_KEYWORDS=["materials science", "machine learning"]
 
 # 日志配置
 LOG_LEVEL=INFO

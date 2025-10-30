@@ -81,6 +81,30 @@ def refresh_insights():
     else:
         flash('没有找到缓存数据', 'info')
 
+    # 启动后台生成新的洞察
+    try:
+        import threading
+
+        def background_regenerate():
+            """后台重新生成洞察"""
+            try:
+                logger.info(f"后台重新生成洞察开始: {cache_key}")
+                insights_data = analyzer.get_research_insights(days)
+                trending_data = scraper.get_trending_topics(days)
+                _cache_insights(cache_key, insights_data, trending_data)
+                logger.info(f"后台洞察重新生成完成: {cache_key}")
+            except Exception as e:
+                logger.error(f"后台洞察重新生成失败: {e}")
+                _cache_insights(cache_key, f"重新生成失败: {str(e)}", [])
+
+        thread = threading.Thread(target=background_regenerate, daemon=True)
+        thread.start()
+        logger.info(f"已启动后台洞察重新生成: {cache_key}")
+        flash('正在后台重新生成洞察，请稍后刷新页面', 'info')
+
+    except Exception as e:
+        logger.error(f"启动后台洞察重新生成失败: {e}")
+
     return redirect(url_for('insights', days=days))
 
 @app.route('/')
@@ -132,6 +156,69 @@ def keywords():
     keywords = config_manager.get_keywords()
     return render_template('keywords.html', keywords=keywords)
 
+@app.route('/settings', methods=['GET', 'POST'])
+def system_settings():
+    """系统配置管理"""
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        try:
+            if action == 'api_config':
+                # 更新API配置
+                deepseek_api_key = request.form.get('deepseek_api_key', '').strip()
+                deepseek_base_url = request.form.get('deepseek_base_url', '').strip()
+
+                # 更新环境变量
+                if deepseek_api_key:
+                    os.environ['DEEPSEEK_API_KEY'] = deepseek_api_key
+                    config_manager.update_config('DEEPSEEK_API_KEY', deepseek_api_key)
+
+                if deepseek_base_url:
+                    os.environ['DEEPSEEK_BASE_URL'] = deepseek_base_url
+                    config_manager.update_config('DEEPSEEK_BASE_URL', deepseek_base_url)
+
+                # 重新初始化分析器以使用新的API配置
+                global analyzer
+                analyzer = DeepSeekAnalyzer()
+
+                flash('API配置已更新', 'success')
+
+            elif action == 'scraping_config':
+                # 更新爬取配置
+                max_papers = request.form.get('max_papers_per_day', '').strip()
+                schedule_time = request.form.get('schedule_time', '').strip()
+
+                if max_papers:
+                    os.environ['MAX_PAPERS_PER_DAY'] = max_papers
+                    config_manager.update_config('MAX_PAPERS_PER_DAY', max_papers)
+
+                if schedule_time:
+                    os.environ['SCHEDULE_TIME'] = schedule_time
+                    config_manager.update_config('SCHEDULE_TIME', schedule_time)
+
+                flash('爬取配置已更新', 'success')
+
+        except Exception as e:
+            logger.error(f"更新配置失败: {e}")
+            flash(f'更新配置失败: {str(e)}', 'error')
+
+        return redirect(url_for('system_settings'))
+
+    # 获取当前配置
+    config = {
+        'deepseek_api_key': os.getenv('DEEPSEEK_API_KEY', ''),
+        'deepseek_base_url': os.getenv('DEEPSEEK_BASE_URL', 'https://api.deepseek.com/v1'),
+        'max_papers_per_day': os.getenv('MAX_PAPERS_PER_DAY', '10'),
+        'schedule_time': os.getenv('SCHEDULE_TIME', '09:00'),
+        'database_path': settings.database_path
+    }
+
+    # 获取系统状态
+    status = scheduler.get_status()
+    status['keywords_count'] = len(config_manager.get_keywords())
+
+    return render_template('settings.html', config=config, status=status)
+
 @app.route('/papers')
 def papers():
     """论文列表"""
@@ -162,13 +249,11 @@ def papers():
 @app.route('/paper/<arxiv_id>')
 def paper_detail(arxiv_id):
     """论文详情"""
-    # 这里需要实现根据arxiv_id获取论文详情的方法
-    # 暂时返回简单的信息
-    papers = scraper.db.search_papers(arxiv_id)
-    if papers:
-        return render_template('paper_detail.html', paper=papers[0])
+    paper = scraper.db.get_paper_by_arxiv_id(arxiv_id)
+    if paper:
+        return render_template('paper_detail.html', paper=paper)
     else:
-        flash('论文未找到', 'error')
+        flash(f'论文未找到: {arxiv_id}', 'error')
         return redirect(url_for('papers'))
 
 @app.route('/scrape', methods=['POST'])
@@ -225,9 +310,42 @@ def scrape_more():
                     logger.error(f"生成AI摘要失败: {e}")
                     flash(f'AI摘要生成失败: {str(e)}', 'warning')
 
-            # 清除洞察缓存，强制重新生成
+            # 自动更新洞察（异步后台执行）
+            try:
+                import threading
+                import time
+
+                def auto_update_insights():
+                    """后台自动更新洞察"""
+                    logger.info("开始后台自动更新研究洞察...")
+                    try:
+                        # 等待一小段时间确保数据库操作完成
+                        time.sleep(2)
+
+                        # 生成新洞察
+                        insights_data = analyzer.get_research_insights(7)
+                        trending_data = analyzer.get_trending_topics(7)
+
+                        # 缓存新洞察
+                        cache_key = 'insights_7'
+                        _cache_insights(cache_key, insights_data, trending_data)
+
+                        logger.info("后台洞察更新完成")
+                    except Exception as e:
+                        logger.error(f"后台洞察更新失败: {e}")
+
+                # 启动后台线程
+                insights_thread = threading.Thread(target=auto_update_insights, daemon=True)
+                insights_thread.start()
+                logger.info("已启动后台洞察更新任务")
+
+            except Exception as e:
+                logger.error(f"启动后台洞察更新失败: {e}")
+
+            # 清除旧的洞察缓存
             global _insights_cache
             _insights_cache.clear()
+            logger.info("已清除洞察缓存")
 
     except Exception as e:
         logger.error(f"增量爬取失败: {e}")
@@ -240,6 +358,23 @@ def scrape_get():
     """处理GET请求的scrape（重定向到首页）"""
     flash('请使用表单提交来执行爬取操作', 'warning')
     return redirect(url_for('index'))
+
+@app.route('/api/insights_status')
+def api_insights_status():
+    """获取洞察状态API"""
+    days = int(request.args.get('days', 7))
+    cache_key = f'insights_{days}'
+
+    cached_insights = _get_cached_insights(cache_key)
+
+    status = {
+        'cache_key': cache_key,
+        'has_cache': cached_insights is not None,
+        'last_updated': cached_insights.get('timestamp') if cached_insights else None,
+        'is_generating': cache_key in _insights_cache and cached_insights is None
+    }
+
+    return jsonify(status)
 
 @app.route('/insights')
 def insights():
@@ -337,7 +472,12 @@ def export():
     export_format = request.args.get('format', 'json')
     days = int(request.args.get('days', 30))
 
-    papers = scraper.db.get_recent_papers(days)
+    # 如果days为-1，获取所有数据
+    if days == -1:
+        # 获取所有论文（需要修改数据库方法来支持获取所有数据）
+        papers = scraper.db.get_all_papers() if hasattr(scraper.db, 'get_all_papers') else scraper.db.get_recent_papers(3650)  # 10年作为"全部"
+    else:
+        papers = scraper.db.get_recent_papers(days)
 
     if not papers:
         flash('没有数据可导出', 'warning')
@@ -348,6 +488,8 @@ def export():
             filepath = exporter.export_to_json(papers)
         elif export_format == 'markdown':
             filepath = exporter.export_to_markdown(papers)
+        elif export_format == 'bibtex':
+            filepath = exporter.export_to_bibtex(papers)
         else:
             flash('不支持的导出格式', 'error')
             return redirect(url_for('papers'))
@@ -361,6 +503,11 @@ def export():
         flash(f'导出失败: {str(e)}', 'error')
 
     return redirect(url_for('papers'))
+
+@app.route('/export_page')
+def export_page():
+    """导出页面"""
+    return render_template('export.html')
 
 @app.route('/api/status')
 def api_status():
@@ -406,6 +553,50 @@ def api_insights():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/paper/<arxiv_id>/bibtex')
+def api_paper_bibtex(arxiv_id):
+    """API: 获取单个论文的BibTeX格式"""
+    try:
+        paper = scraper.db.get_paper_by_arxiv_id(arxiv_id)
+        if not paper:
+            return jsonify({'error': '论文未找到'}), 404
+
+        # 生成BibTeX key
+        first_author_lastname = paper.authors[0].split()[-1] if paper.authors else "Unknown"
+        year = paper.published_date.year if paper.published_date else datetime.now().year
+        title_words = paper.title.split()[:3]
+        title_key = ''.join([word.strip('.,!?;:') for word in title_words])
+        bibtex_key = f"{first_author_lastname}{year}{title_key}"
+
+        # 清理并格式化数据
+        title = paper.title.replace('{', '\\{').replace('}', '\\}').replace('&', '\\&')
+        authors = ' and '.join(paper.authors)
+        abstract = paper.abstract.replace('{', '\\{').replace('}', '\\}').replace('\n', ' ')
+
+        # 生成BibTeX条目
+        bibtex_entry = f"""@misc{{{bibtex_key},
+  title = {{{title}}},
+  author = {{{authors}}},
+  year = {{{year}}},
+  eprint = {{{paper.arxiv_id}}},
+  archivePrefix = {{arXiv}},
+  primaryClass = {{{paper.categories[0] if paper.categories else 'cs.AI'}}},"""
+
+        if abstract:
+            bibtex_entry += f"""
+  abstract = {{{abstract}}},"""
+
+        bibtex_entry += f"""
+  url = {{{paper.pdf_url}}},
+  howpublished = {{arXiv:{paper.arxiv_id}}}
+}}"""
+
+        return bibtex_entry
+
+    except Exception as e:
+        logger.error(f"生成BibTeX失败: {e}")
+        return jsonify({'error': f'生成BibTeX失败: {str(e)}'}), 500
 
 if __name__ == '__main__':
     # 创建模板目录

@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}系统配置 - arXiv论文爬取Agent{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-cogs"></i> 系统配置
+    </h1>
+</div>
+
+<!-- API配置 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-key me-2"></i>API配置</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" name="action" value="api_config">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deepseek_api_key" class="form-label">
+                                    <i class="fas fa-key me-1"></i>DeepSeek API Key
+                                    <span class="text-muted">（用于AI分析和摘要生成）</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="deepseek_api_key"
+                                           name="deepseek_api_key" value="{{ config.deepseek_api_key or '' }}"
+                                           placeholder="输入你的DeepSeek API Key">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('deepseek_api_key')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <a href="https://platform.deepseek.com/" target="_blank" class="text-decoration-none">
+                                        <i class="fas fa-external-link-alt me-1"></i>获取API Key
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deepseek_base_url" class="form-label">
+                                    <i class="fas fa-server me-1"></i>DeepSeek Base URL
+                                </label>
+                                <input type="url" class="form-control" id="deepseek_base_url"
+                                       name="deepseek_base_url" value="{{ config.deepseek_base_url or 'https://api.deepseek.com/v1' }}"
+                                       placeholder="https://api.deepseek.com/v1">
+                                <div class="form-text">默认使用官方API地址</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>保存API配置
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 爬取配置 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-download me-2"></i>爬取配置</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" name="action" value="scraping_config">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max_papers_per_day" class="form-label">
+                                    <i class="fas fa-chart-line me-1"></i>每日最大论文数
+                                </label>
+                                <input type="number" class="form-control" id="max_papers_per_day"
+                                       name="max_papers_per_day" value="{{ config.max_papers_per_day or 10 }}"
+                                       min="1" max="100">
+                                <div class="form-text">限制每天自动爬取的论文数量，避免过度请求</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="schedule_time" class="form-label">
+                                    <i class="fas fa-clock me-1"></i>定时执行时间
+                                </label>
+                                <input type="time" class="form-control" id="schedule_time"
+                                       name="schedule_time" value="{{ config.schedule_time or '09:00' }}">
+                                <div class="form-text">每天自动执行爬取的时间</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-2"></i>保存爬取配置
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 数据库配置 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-database me-2"></i>数据库信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-folder me-1"></i>数据库类型
+                            </label>
+                            <div class="form-control-plaintext">
+                                SQLite (本地文件数据库)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-file-alt me-1"></i>数据库文件路径
+                            </label>
+                            <div class="form-control-plaintext text-muted">
+                                {{ config.database_path or 'data/database/arxiv_papers.db' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <button class="btn btn-outline-info" onclick="showDatabaseInfo()">
+                            <i class="fas fa-info-circle me-2"></i>查看数据库统计
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 系统状态 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>系统状态</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <i class="fas fa-book fa-2x text-primary mb-2"></i>
+                            <h4>{{ status.total_papers or 0 }}</h4>
+                            <p class="text-muted mb-0">总论文数</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <i class="fas fa-calendar-check fa-2x text-success mb-2"></i>
+                            <h4>{{ status.recent_papers_count or 0 }}</h4>
+                            <p class="text-muted mb-0">最近7天</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <i class="fas fa-play-circle fa-2x text-info mb-2"></i>
+                            <h4>{{ '运行中' if status.is_running else '已停止' }}</h4>
+                            <p class="text-muted mb-0">调度器状态</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                            <h4>{{ status.next_run or '未设置' }}</h4>
+                            <p class="text-muted mb-0">下次执行</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 操作按钮 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-tools me-2"></i>系统操作</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <form method="post" action="{{ url_for('scrape') }}" class="d-inline">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-download me-2"></i>立即爬取
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <form method="post" action="{{ url_for('scrape_more') }}" class="d-inline">
+                            <input type="hidden" name="additional_count" value="10">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-plus me-2"></i>增量爬取
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('export_page') }}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-file-export me-2"></i>导出数据
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('insights') }}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-lightbulb me-2"></i>研究洞察
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 数据库统计模态框 -->
+<div class="modal fade" id="databaseInfoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-database me-2"></i>数据库统计信息
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="databaseStats">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2">正在加载数据库统计...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const icon = event.currentTarget.querySelector('i');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+function showDatabaseInfo() {
+    const modal = new bootstrap.Modal(document.getElementById('databaseInfoModal'));
+    modal.show();
+
+    // 异步加载数据库统计
+    fetch('/api/status')
+        .then(response => response.json())
+        .then(data => {
+            const statsHtml = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>基本信息</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>数据库文件:</strong> ${data.database_path || 'data/database/arxiv_papers.db'}</li>
+                            <li><strong>调度器状态:</strong> ${data.is_running ? '运行中' : '已停止'}</li>
+                            <li><strong>下次执行:</strong> ${data.next_run || '未设置'}</li>
+                            <li><strong>执行时间:</strong> ${data.schedule_time || '未设置'}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>数据统计</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>最近7天论文:</strong> ${data.recent_papers_count || 0} 篇</li>
+                            <li><strong>每日最大论文数:</strong> ${data.max_papers_per_day || 10} 篇</li>
+                            <li><strong>当前关键词数:</strong> ${data.keywords_count || 0} 个</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            document.getElementById('databaseStats').innerHTML = statsHtml;
+        })
+        .catch(error => {
+            document.getElementById('databaseStats').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    加载数据库统计失败: ${error.message}
+                </div>
+            `;
+        });
+}
+</script>
+{% endblock %}

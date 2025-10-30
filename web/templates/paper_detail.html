@@ -2,89 +2,704 @@
 
 {% block title %}{{ paper.title[:50] }} - 论文详情{% endblock %}
 
-{% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">
-        <i class="fas fa-book-open"></i> 论文详情
-    </h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <a href="{{ url_for('papers') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i> 返回列表
-        </a>
-    </div>
-</div>
+{% block extra_css %}
+<style>
+/* 全局样式 */
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
 
-<div class="card">
-    <div class="card-header">
-        <h3>{{ paper.title }}</h3>
-    </div>
-    <div class="card-body">
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <p><strong>作者：</strong> {{ paper.authors|join(', ') }}</p>
-                <p><strong>arXiv ID：</strong>
-                    <a href="https://arxiv.org/abs/{{ paper.arxiv_id }}" target="_blank">
-                        {{ paper.arxiv_id }}
-                    </a>
-                </p>
-                <p><strong>发布日期：</strong> {{ paper.published_date }}</p>
-                <p><strong>分类：</strong>
-                    {% for category in paper.categories %}
-                        <span class="badge bg-secondary">{{ category }}</span>
-                    {% endfor %}
-                </p>
+/* 主容器 */
+.main-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    margin: 20px auto;
+    max-width: 1200px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+/* 页面头部 */
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hero-title h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.hero-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.95;
+}
+
+.back-btn {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+/* 内容容器 */
+.content-container {
+    padding: 40px;
+}
+
+/* 论文标题区域 */
+.title-section {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.paper-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 25px;
+    line-height: 1.3;
+}
+
+/* 元信息区域 */
+.meta-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 16px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.meta-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+.meta-info h4 {
+    color: #37474f;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.meta-item {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+}
+
+.meta-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.meta-value {
+    color: #2c3e50;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.author-list {
+    color: #37474f;
+    line-height: 1.7;
+}
+
+.arxiv-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    transition: color 0.3s ease;
+}
+
+.arxiv-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+.date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.category-badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.category-badge {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* 主要操作按钮 */
+.primary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.action-btn {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 15px 20px;
+    transition: all 0.3s ease;
+    border: none;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 1rem;
+}
+
+.btn-primary-action {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary-action:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary-action {
+    background: white;
+    color: #6c757d;
+    border: 2px solid #dee2e6;
+}
+
+.btn-secondary-action:hover {
+    background: #f8f9fa;
+    border-color: #667eea;
+    color: #667eea;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+/* 摘要区域 */
+.summary-section {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.ai-summary {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-left: 4px solid #2196f3;
+    padding: 30px;
+}
+
+.ai-summary-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.ai-summary-header h3 {
+    color: #1976d2;
+    font-weight: 600;
+    font-size: 1.3rem;
+    margin: 0;
+}
+
+.ai-summary-content {
+    color: #37474f;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 25px;
+    border-radius: 12px;
+    border-left: 3px solid #2196f3;
+    text-align: justify;
+}
+
+.abstract-summary {
+    padding: 30px;
+}
+
+.abstract-summary-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.abstract-summary-header h3 {
+    color: #37474f;
+    font-weight: 600;
+    font-size: 1.3rem;
+    margin: 0;
+}
+
+.abstract-content {
+    color: #546e7a;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 12px;
+    border-left: 3px solid #dee2e6;
+    text-align: justify;
+}
+
+/* 操作工具栏 */
+.tools-section {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.tools-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+.tool-group h4 {
+    color: #37474f;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tool-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.tool-btn {
+    background: white;
+    border: 2px solid #dee2e6;
+    color: #6c757d;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tool-btn:hover {
+    background: #f8f9fa;
+    border-color: #667eea;
+    color: #667eea;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.share-btn {
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px) scale(1.1);
+}
+
+.btn-twitter {
+    border-color: #1da1f2;
+    color: #1da1f2;
+}
+
+.btn-twitter:hover {
+    background: #1da1f2;
+    color: white;
+    border-color: #1da1f2;
+}
+
+.btn-email {
+    border-color: #ea4335;
+    color: #ea4335;
+}
+
+.btn-email:hover {
+    background: #ea4335;
+    color: white;
+    border-color: #ea4335;
+}
+
+/* 模态框样式 */
+.modal-content {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px 20px 0 0;
+    border: none;
+    padding: 25px 30px;
+}
+
+.modal-title {
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+.btn-close {
+    filter: brightness(0) invert(1);
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.bibtex-container {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 25px;
+    border-left: 4px solid #667eea;
+    margin-bottom: 20px;
+}
+
+.bibtex-content {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #37474f;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin: 0;
+}
+
+.modal-footer {
+    border: none;
+    padding: 20px 30px 30px;
+}
+
+/* Toast通知样式 */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+}
+
+.custom-toast {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid #667eea;
+    margin-bottom: 10px;
+    animation: slideInRight 0.3s ease-out;
+    max-width: 400px;
+}
+
+.toast-success {
+    border-left-color: #28a745;
+}
+
+.toast-error {
+    border-left-color: #dc3545;
+}
+
+.toast-info {
+    border-left-color: #17a2b8;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 30px 20px;
+    }
+
+    .hero-content {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+
+    .hero-title h1 {
+        font-size: 1.8rem;
+    }
+
+    .content-container {
+        padding: 20px;
+    }
+
+    .title-section {
+        padding: 25px 20px;
+    }
+
+    .paper-title {
+        font-size: 1.5rem;
+    }
+
+    .meta-section {
+        padding: 20px;
+    }
+
+    .meta-grid {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+
+    .tools-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .ai-summary, .abstract-summary {
+        padding: 20px;
+    }
+
+    .ai-summary-content, .abstract-content {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <!-- 页面头部 -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <div class="hero-title">
+                <h1><i class="fas fa-book-open me-3"></i>论文详情</h1>
+                <div class="hero-subtitle">深入了解学术研究成果</div>
             </div>
-            <div class="col-md-4">
-                <div class="d-grid gap-2">
+            <a href="{{ url_for('papers') }}" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                返回列表
+            </a>
+        </div>
+    </div>
+
+    <div class="content-container">
+        <!-- 论文标题 -->
+        <div class="title-section">
+            <h2 class="paper-title">{{ paper.title }}</h2>
+        </div>
+
+        <!-- 元信息区域 -->
+        <div class="meta-section">
+            <div class="meta-grid">
+                <div class="meta-info">
+                    <h4><i class="fas fa-info-circle"></i>论文信息</h4>
+
+                    <div class="meta-item">
+                        <div class="meta-label">作者</div>
+                        <div class="meta-value author-list">
+                            {{ paper.authors|join(', ') }}
+                        </div>
+                    </div>
+
+                    <div class="meta-item">
+                        <div class="meta-label">arXiv ID</div>
+                        <div class="meta-value">
+                            <a href="https://arxiv.org/abs/{{ paper.arxiv_id }}" target="_blank" class="arxiv-link">
+                                {{ paper.arxiv_id }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="meta-item">
+                        <div class="meta-label">发布日期</div>
+                        <div class="meta-value">
+                            <span class="date-badge">
+                                <i class="fas fa-calendar"></i>
+                                {{ paper.published_date.strftime('%Y-%m-%d') if paper.published_date else 'Unknown' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="meta-item">
+                        <div class="meta-label">分类</div>
+                        <div class="meta-value">
+                            <div class="category-badges">
+                                {% for category in paper.categories %}
+                                    <span class="category-badge">{{ category }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="primary-actions">
+                    <h4 style="color: #37474f; font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-download"></i>下载与引用
+                    </h4>
+
                     <a href="https://arxiv.org/pdf/{{ paper.arxiv_id }}.pdf" target="_blank"
-                       class="btn btn-primary">
-                        <i class="fas fa-file-pdf"></i> 下载PDF
+                       class="action-btn btn-primary-action">
+                        <i class="fas fa-file-pdf"></i>
+                        下载PDF
                     </a>
                     <a href="https://arxiv.org/abs/{{ paper.arxiv_id }}" target="_blank"
-                       class="btn btn-outline-secondary">
-                        <i class="fas fa-external-link-alt"></i> arXiv页面
+                       class="action-btn btn-secondary-action">
+                        <i class="fas fa-external-link-alt"></i>
+                        访问arXiv页面
                     </a>
+
+                    <!-- 引用工具 -->
+                    <div style="margin-top: 20px;">
+                        <div style="color: #495057; font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fas fa-quote-right me-2"></i>引用工具
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                            <button class="tool-btn" onclick="copyToClipboard('{{ paper.arxiv_id }}')" style="justify-content: center;">
+                                <i class="fas fa-copy"></i>
+                                复制ID
+                            </button>
+                            <button class="tool-btn" onclick="previewBibTeX('{{ paper.arxiv_id }}')" style="justify-content: center;">
+                                <i class="fas fa-eye"></i>
+                                预览BibTeX
+                            </button>
+                            <button class="tool-btn" onclick="exportBibTeX('{{ paper.arxiv_id }}')" style="justify-content: center;">
+                                <i class="fas fa-download"></i>
+                                导出BibTeX
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {% if paper.summary %}
-        <div class="mb-4">
-            <h5><i class="fas fa-robot"></i> AI生成的摘要</h5>
-            <div class="alert alert-info">
-                {{ paper.summary|nl2br }}
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="mb-4">
-            <h5><i class="fas fa-file-alt"></i> 原始摘要</h5>
-            <div class="bg-light p-3 rounded">
-                {{ paper.abstract|nl2br }}
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6">
-                <h6><i class="fas fa-cog"></i> 操作</h6>
-                <div class="btn-group-vertical" role="group">
-                    <button class="btn btn-outline-primary" onclick="copyToClipboard('{{ paper.arxiv_id }}')">
-                        <i class="fas fa-copy"></i> 复制arXiv ID
-                    </button>
-                    <button class="btn btn-outline-info" onclick="exportBibTeX('{{ paper.arxiv_id }}')">
-                        <i class="fas fa-quote-right"></i> 导出BibTeX
-                    </button>
+        <!-- 摘要区域 -->
+        <div class="summary-section">
+            {% if paper.summary %}
+            <div class="ai-summary">
+                <div class="ai-summary-header">
+                    <i class="fas fa-robot" style="color: #1976d2; font-size: 1.5rem;"></i>
+                    <h3>AI 生成的摘要</h3>
+                </div>
+                <div class="ai-summary-content">
+                    {{ paper.summary }}
                 </div>
             </div>
-            <div class="col-md-6">
-                <h6><i class="fas fa-share"></i> 分享</h6>
-                <div class="btn-group" role="group">
+            {% endif %}
+
+            <div class="abstract-summary">
+                <div class="abstract-summary-header">
+                    <i class="fas fa-file-alt" style="color: #37474f; font-size: 1.5rem;"></i>
+                    <h3>原始摘要</h3>
+                </div>
+                <div class="abstract-content">
+                    {{ paper.abstract }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 分享区域 -->
+        <div class="tools-section">
+            <div class="text-center">
+                <h4 style="color: #37474f; font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <i class="fas fa-share"></i>分享论文
+                </h4>
+                <div class="tool-buttons" style="justify-content: center;">
                     <a href="https://twitter.com/intent/tweet?text={{ paper.title|urlencode }}&url=https://arxiv.org/abs/{{ paper.arxiv_id }}"
-                       target="_blank" class="btn btn-outline-primary">
+                       target="_blank" class="tool-btn share-btn btn-twitter">
                         <i class="fab fa-twitter"></i>
                     </a>
                     <a href="mailto:?subject={{ paper.title|urlencode }}&body=Check out this paper: https://arxiv.org/abs/{{ paper.arxiv_id }}"
-                       class="btn btn-outline-secondary">
+                       class="tool-btn share-btn btn-email">
                         <i class="fas fa-envelope"></i>
                     </a>
                 </div>
@@ -93,16 +708,183 @@
     </div>
 </div>
 
+<!-- BibTeX预览模态框 -->
+<div class="modal fade" id="bibtexModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-quote-right me-2"></i>BibTeX引用格式
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted">可以直接复制或导出为.bib文件</span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="copyBibTeXContent()">
+                        <i class="fas fa-copy me-1"></i>复制全部
+                    </button>
+                </div>
+                <div class="bibtex-container">
+                    <pre id="bibtexContent" class="bibtex-content"></pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="exportBibTeXFromModal()">
+                    <i class="fas fa-download me-2"></i>下载.bib文件
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+// 复制到剪贴板功能
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(function() {
-        alert('已复制到剪贴板: ' + text);
+        showToast(`已复制到剪贴板: ${text}`, 'success');
+    }).catch(function(err) {
+        console.error('复制失败:', err);
+        showToast('复制失败，请手动复制', 'error');
     });
 }
 
+let currentBibTeX = '';
+let currentArxivId = '';
+
+function previewBibTeX(arxivId) {
+    // 显示加载状态
+    const btn = event.target;
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
+    btn.disabled = true;
+
+    // 获取BibTeX数据
+    fetch(`/api/paper/${arxivId}/bibtex`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('获取BibTeX失败');
+            }
+            return response.text();
+        })
+        .then(bibtex => {
+            currentBibTeX = bibtex;
+            currentArxivId = arxivId;
+
+            // 显示BibTeX内容
+            document.getElementById('bibtexContent').textContent = bibtex;
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('bibtexModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('BibTeX预览错误:', error);
+            showToast('BibTeX预览失败: ' + error.message, 'error');
+        })
+        .finally(() => {
+            // 恢复按钮状态
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        });
+}
+
+function copyBibTeXContent() {
+    if (currentBibTeX) {
+        navigator.clipboard.writeText(currentBibTeX).then(() => {
+            showToast('BibTeX已复制到剪贴板', 'success');
+        });
+    }
+}
+
+function exportBibTeXFromModal() {
+    if (currentBibTeX && currentArxivId) {
+        // 创建下载链接
+        const blob = new Blob([currentBibTeX], { type: 'text/plain;charset=utf-8' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentArxivId}.bib`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showToast('BibTeX文件已下载', 'success');
+    }
+}
+
 function exportBibTeX(arxivId) {
-    // 这里可以添加BibTeX导出功能
-    alert('BibTeX导出功能待实现');
+    // 显示加载状态
+    const btn = event.target;
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
+    btn.disabled = true;
+
+    // 获取BibTeX数据
+    fetch(`/api/paper/${arxivId}/bibtex`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('生成BibTeX失败');
+            }
+            return response.text();
+        })
+        .then(bibtex => {
+            // 创建下载链接
+            const blob = new Blob([bibtex], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${arxivId}.bib`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            // 复制到剪贴板
+            navigator.clipboard.writeText(bibtex).then(() => {
+                showToast('BibTeX已导出并复制到剪贴板', 'success');
+            });
+        })
+        .catch(error => {
+            console.error('BibTeX导出错误:', error);
+            showToast('BibTeX导出失败: ' + error.message, 'error');
+        })
+        .finally(() => {
+            // 恢复按钮状态
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        });
+}
+
+// Toast提示功能
+function showToast(message, type = 'info') {
+    // 创建toast容器（如果不存在）
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        document.body.appendChild(toastContainer);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `custom-toast toast-${type === 'error' ? 'error' : type}`;
+    toast.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">${message}</div>
+            <button type="button" class="btn-close ms-3" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // 自动移除
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 4000);
 }
 </script>
 {% endblock %}

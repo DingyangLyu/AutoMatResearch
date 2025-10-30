@@ -45,7 +45,7 @@ DATABASE_URL=sqlite:///arxiv_papers.db
 
 # 爬取配置
 MAX_PAPERS_PER_DAY=10
-SEARCH_KEYWORDS=["machine learning", "deep learning", "artificial intelligence", "neural networks"]
+SEARCH_KEYWORDS=["materials science", "machine learning"]
 
 # 日志配置
 LOG_LEVEL=INFO
@@ -135,7 +135,7 @@ AutoMatResearch/
 支持多个关键词，系统会搜索包含任一关键词的论文：
 
 ```env
-SEARCH_KEYWORDS=["machine learning", "deep learning", "neural networks", "transformer"]
+SEARCH_KEYWORDS=["materials science", "machine learning"]
 ```
 
 ### 调度时间配置

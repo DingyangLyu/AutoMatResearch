@@ -57,7 +57,7 @@ fi
 
 # 创建必要的目录
 echo "📁 创建必要的目录..."
-mkdir -p logs data/database data/exports data/insights
+mkdir -p data/logs data/database data/exports data/insights
 echo "✅ 目录创建完成"
 
 echo ""

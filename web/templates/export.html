@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}数据导出 - arXiv论文爬取Agent{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-file-export"></i> 数据导出
+    </h1>
+</div>
+
+<!-- 导出选项 -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>导出配置</h5>
+            </div>
+            <div class="card-body">
+                <form id="exportForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="export_format" class="form-label">
+                                    <i class="fas fa-file-alt me-1"></i>导出格式
+                                </label>
+                                <select class="form-select" id="export_format" name="format">
+                                    <option value="json">JSON (结构化数据)</option>
+                                    <option value="markdown">Markdown (文档格式)</option>
+                                    <option value="bibtex">BibTeX (引用格式)</option>
+                                </select>
+                                <div class="form-text">选择适合你需求的导出格式</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="export_days" class="form-label">
+                                    <i class="fas fa-calendar me-1"></i>时间范围
+                                </label>
+                                <select class="form-select" id="export_days" name="days">
+                                    <option value="7">最近7天</option>
+                                    <option value="30" selected>最近30天</option>
+                                    <option value="90">最近90天</option>
+                                    <option value="365">最近1年</option>
+                                    <option value="-1">全部数据</option>
+                                </select>
+                                <div class="form-text">选择要导出的论文时间范围</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-download me-2"></i>开始导出
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-lg ms-2" onclick="previewData()">
+                                <i class="fas fa-eye me-2"></i>预览数据
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>格式说明</h5>
+            </div>
+            <div class="card-body">
+                <div id="formatInfo" class="format-info">
+                    <h6>JSON格式</h6>
+                    <p class="small text-muted">适合程序化处理，包含完整的论文数据和元信息。</p>
+                    <ul class="small text-muted">
+                        <li>包含所有字段</li>
+                        <li>机器可读</li>
+                        <li>易于解析</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 格式详情卡片 -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-code me-2"></i>JSON格式</h6>
+            </div>
+            <div class="card-body">
+                <p class="small">完整的结构化数据，包含所有论文信息。</p>
+                <div class="small text-muted">
+                    <strong>适用场景：</strong>
+                    <ul class="mb-0">
+                        <li>数据分析</li>
+                        <li>API集成</li>
+                        <li>数据库导入</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>Markdown格式</h6>
+            </div>
+            <div class="card-body">
+                <p class="small">人类可读的文档格式，适合阅读和分享。</p>
+                <div class="small text-muted">
+                    <strong>适用场景：</strong>
+                    <ul class="mb-0">
+                        <li>文档生成</li>
+                        <li>报告编写</li>
+                        <li>知识分享</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <h6 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>BibTeX格式</h6>
+            </div>
+            <div class="card-body">
+                <p class="small">学术引用格式，兼容LaTeX和引用管理工具。</p>
+                <div class="small text-muted">
+                    <strong>适用场景：</strong>
+                    <ul class="mb-0">
+                        <li>学术写作</li>
+                        <li>LaTeX文档</li>
+                        <li>参考文献管理</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 数据预览模态框 -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i>数据预览
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="previewContent">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2">正在加载预览...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导出进度模态框 -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-download me-2"></i>导出进度
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">导出中...</span>
+                </div>
+                <p>正在导出数据，请稍候...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 格式信息映射
+const formatInfo = {
+    json: {
+        title: 'JSON格式',
+        description: '适合程序化处理，包含完整的论文数据和元信息。',
+        features: ['包含所有字段', '机器可读', '易于解析']
+    },
+    markdown: {
+        title: 'Markdown格式',
+        description: '人类可读的文档格式，适合阅读和分享。',
+        features: ['格式清晰', '易于阅读', '支持渲染']
+    },
+    bibtex: {
+        title: 'BibTeX格式',
+        description: '学术引用标准格式，兼容LaTeX和引用管理工具。',
+        features: ['学术标准', 'LaTeX兼容', '引用管理']
+    }
+};
+
+// 更新格式说明
+document.getElementById('export_format').addEventListener('change', function() {
+    const format = this.value;
+    const info = formatInfo[format];
+
+    document.getElementById('formatInfo').innerHTML = `
+        <h6>${info.title}</h6>
+        <p class="small text-muted">${info.description}</p>
+        <ul class="small text-muted">
+            ${info.features.map(f => `<li>${f}</li>`).join('')}
+        </ul>
+    `;
+});
+
+// 导出表单提交
+document.getElementById('exportForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const format = document.getElementById('export_format').value;
+    const days = document.getElementById('export_days').value;
+
+    // 显示进度模态框
+    const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+    exportModal.show();
+
+    // 执行导出
+    window.location.href = `/export?format=${format}&days=${days}`;
+
+    // 延迟隐藏进度模态框
+    setTimeout(() => {
+        exportModal.hide();
+    }, 2000);
+});
+
+// 预览数据
+function previewData() {
+    const days = document.getElementById('export_days').value;
+    const format = document.getElementById('export_format').value;
+
+    // 显示预览模态框
+    const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+    previewModal.show();
+
+    // 获取论文数据进行预览
+    fetch(`/api/papers?days=${days}`)
+        .then(response => response.json())
+        .then(data => {
+            const previewContent = document.getElementById('previewContent');
+
+            if (data.length === 0) {
+                previewContent.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        指定时间范围内没有找到论文数据。
+                    </div>
+                `;
+                return;
+            }
+
+            // 生成预览内容
+            let previewHtml = `
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    找到 ${data.length} 篇论文，显示前3篇的预览：
+                </div>
+            `;
+
+            data.slice(0, 3).forEach((paper, index) => {
+                previewHtml += `
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <strong>${index + 1}.</strong> ${paper.title}
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-users me-1"></i>
+                                ${paper.authors.slice(0, 3).join(', ')}${paper.authors.length > 3 ? ' 等' : ''}
+                                <span class="ms-3">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    ${new Date(paper.published_date).toLocaleDateString()}
+                                </span>
+                            </p>
+                            <p class="small mb-2">${paper.abstract.substring(0, 200)}...</p>
+                            <div class="small">
+                                <span class="badge bg-primary me-2">${paper.arxiv_id}</span>
+                                <span class="badge bg-secondary">${paper.categories.join(', ')}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            previewContent.innerHTML = previewHtml;
+        })
+        .catch(error => {
+            document.getElementById('previewContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    加载预览失败: ${error.message}
+                </div>
+            `;
+        });
+}
+</script>
+{% endblock %}
