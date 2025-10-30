@@ -681,6 +681,7 @@ body {
                         <i class="fas fa-calendar me-2"></i>时间范围
                     </label>
                     <select class="form-select form-select-lg" name="days">
+                        <option value="0" {% if days == 0 %}selected{% endif %}>所有时间</option>
                         <option value="7" {% if days == 7 %}selected{% endif %}>最近7天</option>
                         <option value="30" {% if days == 30 %}selected{% endif %}>最近30天</option>
                         <option value="90" {% if days == 90 %}selected{% endif %}>最近90天</option>
@@ -716,7 +717,7 @@ body {
             <div class="stat-number">
                 {{ papers | selectattr('summary') | list | length }}
             </div>
-            <div class="stat-label">已有AI摘要</div>
+            <div class="stat-label">当前页已有AI摘要</div>
         </div>
         <div class="stat-card">
             <div class="stat-number">{{ (total + per_page - 1) // per_page }}</div>
@@ -840,9 +841,21 @@ body {
                     <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
                         <i class="fas fa-home me-2"></i>返回首页
                     </a>
-                    <a href="{{ url_for('scrape_more') }}" class="btn btn-primary">
-                        <i class="fas fa-download me-2"></i>爬取新论文
-                    </a>
+                    <form method="post" action="{{ url_for('scrape_more') }}" class="d-inline-block">
+                        <div class="input-group">
+                            <input type="number"
+                                   name="additional_count"
+                                   value="20"
+                                   min="1"
+                                   max="200"
+                                   class="form-control"
+                                   style="width: 100px;"
+                                   placeholder="数量">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-download me-2"></i>爬取新论文
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         {% endif %}

@@ -28,211 +28,240 @@
     .insights-header h5 {
         margin: 0;
         font-weight: 600;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
 
     .insights-content {
-        padding: 25px;
-        line-height: 1.8;
+        padding: 30px;
     }
 
     .insight-section {
-        margin-bottom: 25px;
-        padding: 20px;
-        border-radius: 10px;
-        background: #f8f9ff;
-        border-left: 4px solid #667eea;
-    }
-
-    .insight-section:last-child {
-        margin-bottom: 0;
+        margin-bottom: 30px;
     }
 
     .insight-title {
         font-weight: 600;
         color: #667eea;
-        margin-bottom: 12px;
-        font-size: 1.1rem;
+        margin-bottom: 15px;
         display: flex;
         align-items: center;
+        gap: 10px;
     }
 
-    .insight-title i {
-        margin-right: 10px;
-        font-size: 1.2rem;
-    }
-
-    .trend-item {
-        background: white;
-        padding: 15px;
+    .insight-text {
+        background: #f8f9fa;
+        border-left: 4px solid #667eea;
+        padding: 25px;
         border-radius: 8px;
-        margin-bottom: 12px;
-        border-left: 4px solid #28a745;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: transform 0.2s ease;
-    }
-
-    .trend-item:hover {
-        transform: translateX(5px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-
-    .trend-title {
-        font-weight: 600;
-        color: #28a745;
-        margin-bottom: 8px;
-    }
-
-    .trend-content {
-        color: #666;
+        line-height: 1.7;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         font-size: 0.95rem;
+        color: #2c3e50;
+        white-space: normal;
+        overflow-wrap: break-word;
     }
 
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-bottom: 20px;
+    /* Markdown样式优化 */
+    .insight-text h1, .insight-text h2, .insight-text h3, .insight-text h4, .insight-text h5, .insight-text h6 {
+        margin-top: 25px;
+        margin-bottom: 15px;
+        font-weight: 600;
+        color: #2c3e50;
+        line-height: 1.3;
     }
 
-    .stat-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .insight-text h2 {
+        font-size: 1.4rem;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 8px;
+        margin-top: 30px;
+    }
+
+    .insight-text h3 {
+        font-size: 1.2rem;
+        color: #495057;
+    }
+
+    .insight-text p {
+        margin-bottom: 15px;
+        text-align: justify;
+    }
+
+    .insight-text strong, .insight-text b {
+        color: #667eea;
+        font-weight: 600;
+    }
+
+    .insight-text code {
+        background: #e9ecef;
+        color: #c7254e;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 0.9em;
+    }
+
+    .insight-text blockquote {
+        border-left: 4px solid #667eea;
+        margin: 20px 0;
+        padding: 15px 20px;
+        background: #f8f9ff;
+        color: #495057;
+        font-style: italic;
+        border-radius: 0 8px 8px 0;
+    }
+
+    .insight-text ul, .insight-text ol {
+        margin-bottom: 15px;
+        padding-left: 25px;
+    }
+
+    .insight-text li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+    }
+
+    .insight-text ul li::marker {
+        color: #667eea;
+    }
+
+    .insight-text hr {
+        border: none;
+        height: 2px;
+        background: linear-gradient(90deg, #667eea 0%, transparent 100%);
+        margin: 30px 0;
+    }
+
+    /* 特殊强调样式 */
+    .insight-text .highlight {
+        background: linear-gradient(120deg, #667eea 0%, #764ba2 100%);
         color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+
+    .data-stats {
+        background: #f8f9fa;
+        border-radius: 8px;
         padding: 20px;
-        border-radius: 10px;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
-    .stat-number {
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 5px;
+    .data-stats p {
+        margin: 8px 0;
+        color: #495057;
     }
 
-    .stat-label {
-        font-size: 0.9rem;
-        opacity: 0.9;
-    }
-
-    .keyword-cloud {
+    .trending-topics {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
         margin-top: 15px;
     }
 
-    .keyword-tag {
-        background: #e9ecef;
-        color: #495057;
-        padding: 6px 12px;
+    .badge {
+        padding: 8px 16px;
         border-radius: 20px;
+        font-weight: 500;
         font-size: 0.85rem;
-        border: 1px solid #dee2e6;
-        transition: all 0.2s ease;
-    }
-
-    .keyword-tag:hover {
-        background: #667eea;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        transform: translateY(-2px);
-    }
-
-    .future-outlook {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin-top: 20px;
-    }
-
-    .research-direction {
-        background: rgba(255,255,255,0.1);
-        padding: 12px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        backdrop-filter: blur(10px);
-    }
-
-    @media (max-width: 768px) {
-        .insights-content {
-            padding: 20px 15px;
-        }
-
-        .insight-section {
-            padding: 15px;
-        }
-
-        .stats-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* 状态指示器样式 */
-    .status-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
+        border: none;
         transition: all 0.3s ease;
     }
 
-    .status-dot.loading {
-        background: #ffc107;
-        animation: pulse 1.5s infinite;
+    .badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
-    .status-dot.cached {
-        background: #28a745;
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+        animation: pulse 2s infinite;
     }
 
-    .status-dot.error {
-        background: #dc3545;
+    .status-dot.active {
+        background-color: #28a745;
     }
 
     @keyframes pulse {
-        0%, 100% {
-            opacity: 1;
-        }
-        50% {
-            opacity: 0.5;
-        }
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
     }
 
-    .loading-spinner {
-        animation: spin 1s linear infinite;
+    .btn-toolbar {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 10px;
+        padding: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+    .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        background: white;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border: none;
+        color: white;
+    }
+
+    .btn-warning:hover {
+        background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <div class="d-flex align-items-center">
-        <h1 class="h2 me-4">
-            <i class="fas fa-lightbulb"></i> 研究洞察
+<!-- 页面头部 -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-brain me-3"></i>研究洞察
         </h1>
-        <!-- 状态指示器 -->
-        <div id="status-indicator" class="d-flex align-items-center gap-2" style="display: none;">
-            <div id="status-dot" class="status-dot"></div>
-            <span id="status-text" class="text-muted small"></span>
-        </div>
+        <p class="lead mb-0">AI生成的材料科学研究洞察</p>
     </div>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <form method="get" class="d-flex">
-            <select class="form-select me-2" name="days" style="width: auto;">
-                <option value="7" {% if days == 7 %}selected{% endif %}>最近7天</option>
-                <option value="14" {% if days == 14 %}selected{% endif %}>最近14天</option>
-                <option value="30" {% if days == 30 %}selected{% endif %}>最近30天</option>
-                <option value="90" {% if days == 90 %}selected{% endif %}>最近90天</option>
-            </select>
-            <button class="btn btn-outline-primary" type="submit">
-                <i class="fas fa-sync"></i> 刷新
-            </button>
-        </form>
+
+    <div class="status-indicator">
+        <div id="status-dot" class="status-dot"></div>
+        <span id="status-text" class="text-muted small"></span>
+    </div>
+</div>
+
+<!-- 控制面板 -->
+<div class="insights-container">
+    <div class="insights-card">
+        <div class="btn-toolbar d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <form method="get" class="d-flex me-2">
+                    <select class="form-select me-2" name="days" style="width: auto;">
+                        <option value="1" {% if days == 1 %}selected{% endif %}>最近1天</option>
+                        <option value="7" {% if days == 7 %}selected{% endif %}>最近7天</option>
+                        <option value="14" {% if days == 14 %}selected{% endif %}>最近14天</option>
+                        <option value="30" {% if days == 30 %}selected{% endif %}>最近30天</option>
+                        <option value="90" {% if days == 90 %}selected{% endif %}>最近90天</option>
+                    </select>
+                    <button class="btn btn-outline-primary" type="submit">
+                        <i class="fas fa-sync"></i> 切换
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -243,89 +272,64 @@
             <div class="insights-card">
                 <div class="insights-header">
                     <h5><i class="fas fa-brain"></i> AI生成的研究洞察 (最近{{ days }}天)</h5>
+                    <small class="text-white-50">
+                        基于{{ actual_papers_count }}篇论文 ({{ actual_range }})
+                    </small>
                 </div>
                 <div class="insights-content">
                     {% if insights %}
                         <div class="insight-section">
                             <div class="insight-title">
-                                <i class="fas fa-chart-line"></i>
-                                主要研究趋势
+                                <i class="fas fa-brain"></i>
+                                AI生成的研究洞察
                             </div>
-                            <div class="trend-item">
-                                <div class="trend-title">机器学习与材料科学深度融合</div>
-                                <div class="trend-content">重点关注缺陷检测（2篇）、晶体结构生成（3篇）和原子间势函数开发（4篇）</div>
+                            <div class="insight-text">{{ insights|safe }}</div>
+                        </div>
+
+                        {% if trending %}
+                        <div class="insight-section">
+                            <div class="insight-title">
+                                <i class="fas fa-fire"></i>
+                                热门研究主题
                             </div>
-                            <div class="trend-item">
-                                <div class="trend-title">技术热点</div>
-                                <div class="trend-content">无监督学习、扩散模型和大语言模型成为当前技术热点</div>
+                            <div class="trending-topics">
+                                {% for topic in trending %}
+                                <span class="badge">{{ topic }}</span>
+                                {% endfor %}
                             </div>
                         </div>
+                        {% endif %}
 
                         <div class="insight-section">
                             <div class="insight-title">
-                                <i class="fas fa-rocket"></i>
-                                重要技术突破
+                                <i class="fas fa-info-circle"></i>
+                                数据统计
                             </div>
-                            <div class="trend-item">
-                                <div class="trend-title">🎯 无监督缺陷检测</div>
-                                <div class="trend-content">实现99.7%的异常原子准确分类</div>
-                            </div>
-                            <div class="trend-item">
-                                <div class="trend-title">🚀 物理信息引导的扩散模型</div>
-                                <div class="trend-content">将新型结构发现率提升至67%</div>
-                            </div>
-                            <div class="trend-item">
-                                <div class="trend-title">⚡ LightPFP框架</div>
-                                <div class="trend-content">使模型开发速度提升三个数量级</div>
-                            </div>
-                            <div class="trend-item">
-                                <div class="trend-title">🤖 LLM与进化算法结合</div>
-                                <div class="trend-content">在多目标材料设计中实现更高命中率</div>
-                            </div>
-                        </div>
-
-                        <div class="future-outlook">
-                            <div class="insight-title" style="color: white; margin-bottom: 15px;">
-                                <i class="fas fa-crystal-ball"></i>
-                                未来展望
-                            </div>
-                            <div class="research-direction">
-                                <strong>多模态AI融合</strong> - LLM+扩散模型将成为材料发现主流范式
-                            </div>
-                            <div class="research-direction">
-                                <strong>自旋感知技术</strong> - 高精度机器学习势函数是下一个突破点
-                            </div>
-                            <div class="research-direction">
-                                <strong>数据解决方案</strong> - 知识蒸馏和迁移学习有望解决数据稀缺问题
-                            </div>
-                        </div>
-
-                        <div class="insight-section">
-                            <div class="insight-title">
-                                <i class="fas fa-star"></i>
-                                值得关注方向
-                            </div>
-                            <div class="keyword-cloud">
-                                <span class="keyword-tag">非晶态材料导电机制研究</span>
-                                <span class="keyword-tag">通用机器学习原子间势标准化评估</span>
-                                <span class="keyword-tag">混合精度DFT计算数据融合技术</span>
-                            </div>
-                        </div>
-
-                        <div class="insight-section">
-                            <div class="insight-title">
-                                <i class="fas fa-users"></i>
-                                研究协作趋势
-                            </div>
-                            <div class="trend-content">
-                                研究团队普遍采用开源策略，nanoHUB、GitHub等平台成为重要协作枢纽
+                            <div class="data-stats">
+                                <p><strong>分析范围:</strong> 最近{{ days }}天</p>
+                                <p><strong>论文数量:</strong> {{ actual_papers_count }}篇</p>
+                                <p><strong>数据时间:</strong> {{ actual_range }}</p>
+                                <p><strong>更新时间:</strong> <span id="current-time"></span></p>
                             </div>
                         </div>
                     {% else %}
-                        <div class="text-center text-muted py-5">
-                            <i class="fas fa-brain fa-4x mb-3" style="color: #667eea;"></i>
+                        <div class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="fas fa-brain fa-4x text-muted"></i>
+                            </div>
                             <h5>暂无研究洞察</h5>
-                            <p class="small">请确保DeepSeek API密钥已正确配置</p>
+                            <p class="text-muted">请先爬取论文数据或生成洞察</p>
+                            <div class="mt-3">
+                                <a href="{{ url_for('index') }}" class="btn btn-primary me-2">
+                                    <i class="fas fa-download me-2"></i>爬取论文
+                                </a>
+                                <form method="post" action="{{ url_for('refresh_insights') }}" class="d-inline">
+                                    <input type="hidden" name="days" value="{{ days }}">
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="fas fa-magic me-2"></i>生成洞察
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     {% endif %}
                 </div>
@@ -335,6 +339,7 @@
 </div>
 
 <!-- 热门主题 -->
+{% if trending %}
 <div class="row">
     <div class="col-12">
         <div class="insights-container">
@@ -343,113 +348,110 @@
                     <h5><i class="fas fa-fire"></i> 热门研究主题 (最近{{ days }}天)</h5>
                 </div>
                 <div class="insights-content">
-                    {% if trending %}
-                        <div class="row">
-                            {% for topic in trending %}
-                                <div class="col-md-6 mb-3">
-                                    <div class="trend-item" style="border-left-color: #ff6b6b;">
-                                        <div class="d-flex align-items-center">
-                                            <span class="badge me-3" style="background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%); font-size: 1.1em; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
-                                                {{ loop.index }}
-                                            </span>
-                                            <div>
-                                                <h6 class="mb-0" style="color: #333;">{{ topic }}</h6>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-chart-bar fa-3x mb-3" style="color: #ff6b6b;"></i>
-                            <h5>暂无热门主题数据</h5>
-                            <p class="small">需要更多论文数据来生成热门主题</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 使用说明 -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="insights-container">
-            <div class="insights-card">
-                <div class="insights-header" style="background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);">
-                    <h5><i class="fas fa-info-circle"></i> 关于研究洞察</h5>
-                </div>
-                <div class="insights-content">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="insight-section">
-                                <div class="insight-title">
-                                    <i class="fas fa-database"></i>
-                                    数据来源
-                                </div>
-                                <p>研究洞察基于最近{{ days }}天爬取的论文数据，通过DeepSeek AI模型分析生成。</p>
-                            </div>
-
-                            <div class="insight-section">
-                                <div class="insight-title">
-                                    <i class="fas fa-search"></i>
-                                    分析内容
-                                </div>
-                                <ul>
-                                    <li>主要研究趋势和热点</li>
-                                    <li>重要的技术突破或创新点</li>
-                                    <li>研究方向的未来展望</li>
-                                    <li>值得关注的研究团队或作者</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="insight-section">
-                                <div class="insight-title">
-                                    <i class="fas fa-chart-bar"></i>
-                                    热门主题
-                                </div>
-                                <p>热门主题基于论文标题和摘要中的关键词频率分析生成，反映了当前的研究热点。</p>
-                            </div>
-
-                            <div class="insight-section">
-                                <div class="insight-title">
-                                    <i class="fas fa-sync"></i>
-                                    更新频率
-                                </div>
-                                <ul>
-                                    <li>每日自动更新研究洞察</li>
-                                    <li>每周生成综合分析报告</li>
-                                    <li>实时更新热门主题排名</li>
-                                </ul>
-                            </div>
-                        </div>
+                    <div class="trending-topics">
+                        {% for topic in trending %}
+                        <span class="badge" style="background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);">
+                            {{ topic }}
+                        </span>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endif %}
 
 <script>
-// 简化的洞察页面脚本
-console.log('洞察页面加载完成');
-
-// 页面加载完成后的简单初始化
+// 页面加载完成后更新状态和时间
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM加载完成');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const currentTimeElement = document.getElementById('current-time');
 
-    // 显示简单的状态信息
-    const statusIndicator = document.getElementById('status-indicator');
-    if (statusIndicator) {
-        statusIndicator.style.display = 'flex';
-        const statusText = document.getElementById('status-text');
-        if (statusText) {
-            statusText.textContent = '洞察页面已加载';
+    statusDot.classList.add('active');
+    statusText.textContent = '数据已加载';
+
+    // 更新当前时间
+    function updateCurrentTime() {
+        const now = new Date();
+        const timeString = now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0') + ' ' +
+            String(now.getHours()).padStart(2, '0') + ':' +
+            String(now.getMinutes()).padStart(2, '0') + ':' +
+            String(now.getSeconds()).padStart(2, '0');
+
+        if (currentTimeElement) {
+            currentTimeElement.textContent = timeString;
         }
     }
+
+    updateCurrentTime();
+    // 每秒更新时间
+    setInterval(updateCurrentTime, 1000);
+
+    // 3秒后隐藏状态指示器
+    setTimeout(() => {
+        statusDot.classList.remove('active');
+        statusText.textContent = '';
+    }, 3000);
 });
+
+// 显示Flash消息
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        window.showToast('{{ message }}', '{{ category }}');
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+// Toast消息函数
+window.showToast = function(message, category = 'info') {
+    const toastContainer = document.getElementById('toast-container') || createToastContainer();
+
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white border-0 mb-3`;
+
+    if (category === 'success') {
+        toast.classList.add('bg-success');
+    } else if (category === 'error') {
+        toast.classList.add('bg-danger');
+    } else if (category === 'warning') {
+        toast.classList.add('bg-warning');
+    } else {
+        toast.classList.add('bg-info');
+    }
+
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'polite');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Bootstrap toast初始化
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+
+    // 5秒后自动移除
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+};
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
+}
 </script>
 {% endblock %}

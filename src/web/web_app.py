@@ -6,6 +6,7 @@
 import os
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 import json
+import markdown
 from datetime import datetime, timedelta
 from pathlib import Path
 from src.utils.logger import setup_logger, get_logger
@@ -43,67 +44,39 @@ exporter = PaperExporter(scraper.db)
 setup_logger()
 logger = get_logger(__name__)
 
-# 洞察缓存
-_insights_cache = {}
+# 洞察缓存现在使用数据库永久缓存，无需内存缓存
 
-def _get_cached_insights(cache_key):
-    """获取缓存的洞察数据"""
-    if cache_key in _insights_cache:
-        cached_data = _insights_cache[cache_key]
-        import time
-        if time.time() - cached_data['timestamp'] < 3600:
-            return cached_data
-        else:
-            # 删除过期缓存
-            del _insights_cache[cache_key]
-    return None
-
-def _cache_insights(cache_key, insights, trending):
-    """缓存洞察数据"""
-    import time
-    _insights_cache[cache_key] = {
-        'insights': insights,
-        'trending': trending,
-        'timestamp': time.time()
-    }
-    logger.info(f"已缓存洞察数据: {cache_key}")
-
-@app.route('/refresh_insights')
+@app.route('/refresh_insights', methods=['GET', 'POST'])
 def refresh_insights():
-
-    days = int(request.args.get('days', 7))
-    cache_key = f'insights_{days}'
-
-    # 删除缓存
-    if cache_key in _insights_cache:
-        del _insights_cache[cache_key]
-        flash(f'已清除 {days} 天的洞察缓存', 'success')
+    """强制刷新洞察缓存"""
+    if request.method == 'POST':
+        days = int(request.form.get('days', 7))
     else:
-        flash('没有找到缓存数据', 'info')
+        days = int(request.args.get('days', 7))
 
-    # 启动后台生成新的洞察
     try:
-        import threading
+        # 清除数据库缓存
+        import sqlite3
+        with sqlite3.connect(scraper.db.db_path) as conn:
+            conn.execute("DELETE FROM insights_cache WHERE cache_key = ?", (f'insights_{days}',))
+            conn.commit()
+        logger.info(f"已清除 {days} 天的数据库洞察缓存")
 
-        def background_regenerate():
-            """后台重新生成洞察"""
-            try:
-                logger.info(f"后台重新生成洞察开始: {cache_key}")
-                insights_data = analyzer.get_research_insights(days)
-                trending_data = scraper.get_trending_topics(days)
-                _cache_insights(cache_key, insights_data, trending_data)
-                logger.info(f"后台洞察重新生成完成: {cache_key}")
-            except Exception as e:
-                logger.error(f"后台洞察重新生成失败: {e}")
-                _cache_insights(cache_key, f"重新生成失败: {str(e)}", [])
+        flash(f'正在重新生成 {days} 天洞察...', 'info')
 
-        thread = threading.Thread(target=background_regenerate, daemon=True)
-        thread.start()
-        logger.info(f"已启动后台洞察重新生成: {cache_key}")
-        flash('正在后台重新生成洞察，请稍后刷新页面', 'info')
+        # 同步生成新的洞察，确保用户能看到最新的洞察
+        try:
+            logger.info(f"重新生成洞察开始: insights_{days}")
+            new_insights = analyzer.get_research_insights(days)
+            logger.info(f"洞察重新生成完成: insights_{days}")
+            flash('洞察已成功更新！', 'success')
+        except Exception as e:
+            logger.error(f"洞察重新生成失败: {e}")
+            flash(f"生成洞察失败: {str(e)}", 'error')
 
     except Exception as e:
-        logger.error(f"启动后台洞察重新生成失败: {e}")
+        logger.error(f"清除洞察缓存失败: {e}")
+        flash(f"操作失败: {str(e)}", 'error')
 
     return redirect(url_for('insights', days=days))
 
@@ -112,11 +85,16 @@ def index():
     """主页"""
     # 获取系统状态
     status = scheduler.get_status()
-    recent_papers = scraper.db.get_recent_papers(7)
+
+    # 获取最新10篇论文（不限制时间范围，显示最新的研究成果）
+    recent_papers = scraper.db.get_recent_papers(30)  # 获取更多论文用于筛选
+    # 按发表时间排序并取最新的10篇
+    recent_papers.sort(key=lambda p: p.published_date, reverse=True)
+    recent_papers = recent_papers[:10]
 
     return render_template('index.html',
                          status=status,
-                         recent_papers=recent_papers[:5],
+                         recent_papers=recent_papers,
                          keywords=config_manager.get_keywords())
 
 @app.route('/keywords', methods=['GET', 'POST'])
@@ -229,6 +207,8 @@ def papers():
 
     if search:
         papers = scraper.db.search_papers(search)
+    elif days == 0:  # 0 表示所有时间
+        papers = scraper.db.get_all_papers()
     else:
         papers = scraper.db.get_recent_papers(days)
 
@@ -274,7 +254,21 @@ def scrape_more():
     """增量爬取更多论文"""
     try:
         logger.info("Web界面触发增量爬取")
-        additional_count = int(request.form.get('additional_count', 10))
+
+        # 验证用户输入的数量
+        try:
+            additional_count = int(request.form.get('additional_count', 10))
+        except (ValueError, TypeError):
+            additional_count = 10
+
+        # 限制在合理范围内
+        if additional_count < 1:
+            additional_count = 1
+        elif additional_count > 200:
+            additional_count = 200
+            flash('请求数量超过最大限制，已调整为200篇', 'warning')
+
+        logger.info(f"用户请求爬取 {additional_count} 篇论文")
         keywords = config_manager.get_keywords()
 
         saved_count = scraper.scrape_more_papers(keywords, additional_count)
@@ -306,6 +300,22 @@ def scrape_more():
                     logger.info(f"成功为 {analyzed_count} 篇论文生成AI摘要")
                     flash(f'已为 {analyzed_count} 篇新论文生成AI摘要', 'info')
 
+                    # 数据库更新后，自动更新洞察缓存
+                    logger.info("数据库已更新，开始自动更新洞察缓存...")
+
+                    # 更新不同时间范围的洞察
+                    for days in [1, 7, 30]:
+                        try:
+                            updated = analyzer.auto_update_insights_if_needed(days)
+                            if updated:
+                                logger.info(f"成功更新 {days} 天洞察缓存")
+                            else:
+                                logger.info(f"{days} 天洞察缓存已是最新，无需更新")
+                        except Exception as e:
+                            logger.error(f"更新 {days} 天洞察缓存失败: {e}")
+
+                    flash('洞察缓存已自动更新', 'info')
+
                 except Exception as e:
                     logger.error(f"生成AI摘要失败: {e}")
                     flash(f'AI摘要生成失败: {str(e)}', 'warning')
@@ -326,10 +336,7 @@ def scrape_more():
                         insights_data = analyzer.get_research_insights(7)
                         trending_data = analyzer.get_trending_topics(7)
 
-                        # 缓存新洞察
-                        cache_key = 'insights_7'
-                        _cache_insights(cache_key, insights_data, trending_data)
-
+                        # 洞察已通过analyzer自动缓存到数据库
                         logger.info("后台洞察更新完成")
                     except Exception as e:
                         logger.error(f"后台洞察更新失败: {e}")
@@ -342,10 +349,8 @@ def scrape_more():
             except Exception as e:
                 logger.error(f"启动后台洞察更新失败: {e}")
 
-            # 清除旧的洞察缓存
-            global _insights_cache
-            _insights_cache.clear()
-            logger.info("已清除洞察缓存")
+            # 洞察缓存现在通过数据库管理，无需手动清除
+            logger.info("洞察缓存通过数据库自动管理")
 
     except Exception as e:
         logger.error(f"增量爬取失败: {e}")
@@ -365,86 +370,140 @@ def api_insights_status():
     days = int(request.args.get('days', 7))
     cache_key = f'insights_{days}'
 
-    cached_insights = _get_cached_insights(cache_key)
+    cached_insights = analyzer.db.get_insights_cache(cache_key)
 
     status = {
         'cache_key': cache_key,
         'has_cache': cached_insights is not None,
-        'last_updated': cached_insights.get('timestamp') if cached_insights else None,
-        'is_generating': cache_key in _insights_cache and cached_insights is None
+        'last_updated': cached_insights.get('updated_at') if cached_insights else None,
+        'is_generating': cache_key in analyzer._generating_insights
     }
 
     return jsonify(status)
 
 @app.route('/insights')
 def insights():
-    """研究洞察"""
+    """研究洞察 - 基于数据库更新状态的智能缓存"""
     days = int(request.args.get('days', 7))
-
-    # 检查是否有缓存的洞察
     cache_key = f'insights_{days}'
-    cached_insights = _get_cached_insights(cache_key)
 
-    if cached_insights:
-        logger.info(f"使用缓存的洞察数据: {cache_key}")
-        insights = cached_insights['insights']
-        trending = cached_insights['trending']
-    else:
-        # 异步生成洞察，避免页面卡住
-        try:
-            logger.info(f"生成新的洞察数据: {cache_key}")
+    try:
+        # 直接使用数据库缓存，无需等待
+        logger.info(f"获取洞察数据: {cache_key}")
 
-            # 使用线程来处理可能耗时的操作
-            import threading
-            import queue
+        # 检查缓存是否存在且有效
+        cached_data = analyzer.db.get_insights_cache(cache_key)
 
-            result_queue = queue.Queue()
+        if cached_data:
+            # 获取当前数据的哈希值
+            current_hash = analyzer.db.get_data_hash(days)
+            logger.debug(f"缓存数据哈希: {cached_data.get('data_hash', 'None')[:8]}..., 当前哈希: {current_hash[:8]}...")
 
-            def generate_insights():
-                try:
-                    insights_data = analyzer.get_research_insights(days)
-                    trending_data = scraper.get_trending_topics(days)
-                    result_queue.put(('success', insights_data, trending_data))
-                except Exception as e:
-                    result_queue.put(('error', str(e), []))
-
-            # 启动线程
-            thread = threading.Thread(target=generate_insights)
-            thread.daemon = True
-            thread.start()
-
-            # 等待结果，最多等待30秒
-            thread.join(timeout=30)
-
-            if thread.is_alive():
-                logger.warning("洞察生成超时，使用默认内容")
-                insights = "洞察生成超时，请稍后重试。"
-                trending = []
+            if cached_data.get('data_hash') == current_hash:
+                logger.info(f"数据未更新，使用缓存洞察: {cache_key}")
+                insights = cached_data['insights']
+                trending = cached_data.get('trending', [])
             else:
-                try:
-                    status, insights_data, trending_data = result_queue.get_nowait()
-                    if status == 'success':
-                        insights = insights_data
-                        trending = trending_data
-                        # 缓存结果
-                        _cache_insights(cache_key, insights, trending)
-                    else:
-                        insights = f"生成洞察失败: {insights_data}"
-                        trending = []
-                except queue.Empty:
-                    logger.warning("洞察生成队列为空，使用默认内容")
-                    insights = "洞察生成异常，请稍后重试。"
-                    trending = []
+                # 数据哈希不匹配，可能需要重新生成
+                logger.info(f"数据哈希不匹配，尝试重新生成洞察: {cache_key}")
 
-        except Exception as e:
-            logger.error(f"生成洞察失败: {e}")
-            insights = f"生成洞察失败: {str(e)}"
-            trending = []
+                # 尝试获取最新的缓存（可能在其他请求中已经更新）
+                latest_cached_data = analyzer.db.get_insights_cache(cache_key)
+
+                if latest_cached_data and latest_cached_data.get('data_hash') == current_hash:
+                    logger.info(f"发现更新的缓存，使用新洞察: {cache_key}")
+                    insights = latest_cached_data['insights']
+                    trending = latest_cached_data.get('trending', [])
+                else:
+                    # 确实需要重新生成
+                    logger.info(f"需要重新生成洞察: {cache_key}")
+
+                    # 同步生成新洞察
+                    try:
+                        insights = analyzer.get_research_insights(days)
+                        if insights and not insights.startswith("生成洞察失败"):
+                            trending = analyzer.get_trending_topics(days)
+                        else:
+                            trending = []
+                    except Exception as e:
+                        logger.error(f"生成洞察失败: {e}")
+                        insights = f"生成洞察失败: {str(e)}"
+                        trending = []
+        else:
+            # 没有缓存数据，同步生成（首次访问）
+            logger.info(f"首次访问，生成洞察: {cache_key}")
+            try:
+                insights = analyzer.get_research_insights(days)
+                if insights and not insights.startswith("生成洞察失败"):
+                    trending = analyzer.get_trending_topics(days)
+                else:
+                    trending = []
+            except Exception as e:
+                logger.error(f"生成洞察失败: {e}")
+                insights = f"生成洞察失败: {str(e)}"
+                trending = []
+
+    except Exception as e:
+        logger.error(f"获取洞察失败: {e}")
+        insights = f"获取洞察失败: {str(e)}"
+        trending = []
+
+    # 计算实际的数据范围（在try-except块之外，确保总是执行）
+    try:
+        actual_papers = analyzer.db.get_recent_papers(days)
+        actual_papers_count = len(actual_papers)
+
+        if actual_papers_count > 0:
+            earliest_date = min(paper.published_date.date() for paper in actual_papers)
+            latest_date = max(paper.published_date.date() for paper in actual_papers)
+            actual_range = f"{earliest_date} 到 {latest_date}"
+        else:
+            actual_range = "无数据"
+    except Exception as e:
+        logger.error(f"获取实际数据范围失败: {e}")
+        actual_papers_count = 0
+        actual_range = "数据获取失败"
+
+    # 将洞察内容转换为HTML格式以支持Markdown
+    try:
+        if insights and not insights.startswith("生成洞察失败") and not insights.startswith("获取洞察失败"):
+            # 清理AI生成内容中的markdown代码块标记
+            cleaned_insights = insights.strip()
+            if cleaned_insights.startswith('```markdown'):
+                # 移除开头的```markdown
+                cleaned_insights = cleaned_insights[11:].strip()
+                # 移除结尾的```
+                if cleaned_insights.endswith('```'):
+                    cleaned_insights = cleaned_insights[:-3].strip()
+            elif cleaned_insights.startswith('```'):
+                # 处理其他代码块标记
+                cleaned_insights = cleaned_insights[3:].strip()
+                if cleaned_insights.endswith('```'):
+                    cleaned_insights = cleaned_insights[:-3].strip()
+
+            # 使用markdown库转换内容
+            insights_html = markdown.markdown(
+                cleaned_insights,
+                extensions=['tables', 'fenced_code', 'toc', 'nl2br'],
+                extension_configs={
+                    'tables': {},
+                    'fenced_code': {},
+                    'toc': {},
+                    'nl2br': {}
+                }
+            )
+        else:
+            insights_html = insights
+    except Exception as e:
+        logger.warning(f"Markdown转换失败，使用原始内容: {e}")
+        insights_html = insights
 
     return render_template('insights.html',
-                         insights=insights,
-                         trending=trending,
-                         days=days)
+                     insights=insights_html,
+                     trending=trending,
+                     days=days,
+                     actual_papers_count=actual_papers_count,
+                     actual_range=actual_range)
 
 @app.route('/compare', methods=['GET', 'POST'])
 def compare():

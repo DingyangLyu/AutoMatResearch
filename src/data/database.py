@@ -27,6 +27,7 @@ class DatabaseManager:
     def init_database(self):
         """初始化数据库表"""
         with sqlite3.connect(self.db_path) as conn:
+            # 创建论文表
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS papers (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,6 +40,19 @@ class DatabaseManager:
                     pdf_url TEXT NOT NULL,
                     summary TEXT,
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # 创建洞察缓存表
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS insights_cache (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    cache_key TEXT UNIQUE NOT NULL,
+                    data_hash TEXT NOT NULL,
+                    insights TEXT NOT NULL,
+                    trending TEXT NOT NULL,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             conn.commit()
@@ -79,7 +93,7 @@ class DatabaseManager:
             cursor.execute("""
                 SELECT title, authors, abstract, arxiv_id, published_date, categories, pdf_url, summary, created_at
                 FROM papers
-                WHERE created_at >= datetime('now', '-{} days')
+                WHERE published_date >= datetime('now', '-{} days')
                 ORDER BY published_date DESC
             """.format(days))
 
@@ -98,12 +112,53 @@ class DatabaseManager:
                 ))
             return papers
 
+    def get_all_papers(self) -> List[Paper]:
+        """获取所有论文（不限制时间范围）"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT title, authors, abstract, arxiv_id, published_date, categories, pdf_url, summary, created_at
+                FROM papers
+                ORDER BY published_date DESC
+            """)
+
+            papers = []
+            for row in cursor.fetchall():
+                papers.append(Paper(
+                    title=row[0],
+                    authors=row[1].split(','),
+                    abstract=row[2],
+                    arxiv_id=row[3],
+                    published_date=datetime.fromisoformat(row[4]),
+                    categories=row[5].split(','),
+                    pdf_url=row[6],
+                    summary=row[7],
+                    created_at=datetime.fromisoformat(row[8]) if row[8] else None
+                ))
+            return papers
+
+    def get_latest_paper_date(self) -> Optional[datetime]:
+        """
+        获取数据库中最新的论文发表日期
+
+        Returns:
+            最新论文的发表日期，如果数据库为空返回None
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT MAX(published_date) FROM papers")
+            result = cursor.fetchone()
+
+            if result and result[0]:
+                return datetime.fromisoformat(result[0])
+            return None
+
     def get_data_hash(self, days: int = 7) -> str:
         """
         获取数据的哈希值，用于检测数据变化
 
         Args:
-            days: 分析的天数
+            days: 分析的天数（基于论文发表时间）
 
         Returns:
             数据哈希字符串
@@ -112,21 +167,28 @@ class DatabaseManager:
 
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
+            # 使用论文发表时间而不是数据库创建时间，并排除可能变化的字段
             cursor.execute("""
-                SELECT title, authors, abstract, arxiv_id, published_date, categories, summary, created_at
+                SELECT title, authors, abstract, arxiv_id, published_date, categories
                 FROM papers
-                WHERE created_at >= datetime('now', '-{} days')
+                WHERE published_date >= datetime('now', '-{} days')
                 ORDER BY arxiv_id
             """.format(days))
 
             # 获取所有数据并生成哈希
             all_data = []
             for row in cursor.fetchall():
-                all_data.append(f"{row[0]}|{row[1]}|{row[2]}|{row[3]}|{row[4]}|{row[5]}|{row[7] if row[7] else 'None'}")
+                all_data.append(f"{row[0]}|{row[1]}|{row[2]}|{row[3]}|{row[4]}|{row[5]}")
 
             # 生成MD5哈希
             content = "|".join(sorted(all_data))
-            return hashlib.md5(content.encode('utf-8')).hexdigest()
+            hash_value = hashlib.md5(content.encode('utf-8')).hexdigest()
+
+            # 添加数据总数到哈希中，确保数据量变化也能被检测到
+            total_papers = len(all_data)
+            final_hash = hashlib.md5(f"{hash_value}_{total_papers}".encode('utf-8')).hexdigest()
+
+            return final_hash
 
     def save_insights_cache(self, cache_key: str, data_hash: str, insights: str, trending: List[str]) -> bool:
         """

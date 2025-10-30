@@ -138,9 +138,11 @@ class ArxivScraper:
         # 使用AND关系，要求论文同时包含所有关键词
         search_query = " AND ".join(query_parts)
 
-        # 根据需要调整时间范围
-        # 如果请求更多结果，扩大时间范围
-        if max_results > 20:
+        # 根据需要调整时间范围和搜索策略
+        if max_results > 30:
+            # 对于大量请求，扩大时间范围并分批搜索
+            days_back = min(days_back * 3, 90)  # 最多回溯90天
+        elif max_results > 20:
             days_back = min(days_back * 2, 30)  # 最多回溯30天
 
         end_date = datetime.now()
@@ -369,15 +371,105 @@ class ArxivScraper:
         """
         logger.info(f"开始增量爬取，目标增加 {additional_count} 篇论文")
 
-        # 扩大搜索范围以获得更多候选论文
-        # 搜索更多的论文来确保有足够的新论文
-        search_limit = additional_count * 3  # 搜索3倍的量，确保有足够的新论文
+        # 增量爬取逻辑：从最新论文的前一天开始，向过去搜索
+        try:
+            latest_paper_date = self.db.get_latest_paper_date()
+            if latest_paper_date:
+                # 增量爬取应该搜索比最新论文更早的论文
+                from datetime import timedelta
 
-        # 对于增量爬取，扩大时间范围来找到更多论文
-        papers = self.search_papers(keywords, search_limit, days_back=14)
+                # 计算搜索的起始日期（最新论文的前一天）
+                search_end_date = latest_paper_date - timedelta(days=1)
+
+                # 根据请求数量决定搜索多长时间范围
+                if additional_count <= 10:
+                    # 小量请求：搜索前7天
+                    search_start_date = search_end_date - timedelta(days=7)
+                    days_back = 8  # 总共8天范围
+                elif additional_count <= 50:
+                    # 中量请求：搜索前30天
+                    search_start_date = search_end_date - timedelta(days=30)
+                    days_back = 31
+                else:
+                    # 大量请求：搜索前90天
+                    search_start_date = search_end_date - timedelta(days=90)
+                    days_back = 91
+
+                logger.info(f"增量爬取：搜索范围 {search_start_date.date()} 到 {search_end_date.date()}（最新论文：{latest_paper_date.date()}）")
+            else:
+                # 数据库为空，搜索最近的论文
+                from datetime import timedelta
+                search_end_date = datetime.now()
+                search_start_date = search_end_date - timedelta(days=7)
+                days_back = 7
+                logger.info("数据库为空，搜索最近7天的论文")
+        except Exception as e:
+            logger.warning(f"获取最新论文日期失败：{e}，使用默认策略")
+            from datetime import timedelta
+            search_end_date = datetime.now()
+            search_start_date = search_end_date - timedelta(days=7)
+            days_back = 7
+
+        # 根据请求数量动态调整搜索策略
+        if additional_count <= 10:
+            search_limit = min(additional_count * 5, 50)  # 小量请求：5倍搜索
+        elif additional_count <= 50:
+            search_limit = min(additional_count * 3, 150)  # 中量请求：3倍搜索
+        else:
+            search_limit = min(additional_count * 2, 300)  # 大量请求：2倍搜索
+
+        logger.info(f"搜索策略：目标 {additional_count} 篇，搜索 {search_limit} 篇候选论文")
+
+        # 实现多轮搜索，自动扩展时间范围
+        all_papers = []
+        current_search_start_date = search_start_date
+        current_search_end_date = search_end_date
+        max_expansion_rounds = 5  # 最多扩展5轮时间范围
+        expansion_days = 7  # 每轮扩展7天
+
+        for round_num in range(max_expansion_rounds):
+            logger.info(f"=== 第 {round_num + 1} 轮搜索：{current_search_start_date.date()} 到 {current_search_end_date.date()} ===")
+
+            # 使用连续搜索在这个时间范围内搜索
+            round_papers = self._search_in_time_range(
+                keywords=keywords,
+                start_date=current_search_start_date,
+                end_date=current_search_end_date,
+                search_limit=search_limit
+            )
+
+            # 过滤掉已存在的论文
+            new_papers = []
+            for paper in round_papers:
+                if not self.db.paper_exists(paper.arxiv_id):
+                    new_papers.append(paper)
+
+            logger.info(f"第 {round_num + 1} 轮找到 {len(new_papers)} 篇新论文（总共搜索到 {len(round_papers)} 篇）")
+
+            all_papers.extend(new_papers)
+
+            # 如果已经获得足够的新论文就停止
+            if len(all_papers) >= additional_count:
+                logger.info(f"已找到足够的新论文 ({len(all_papers)} >= {additional_count})，停止搜索")
+                break
+
+            # 如果这轮没有找到新论文，或者找到的不够，继续扩展时间范围
+            if len(new_papers) == 0 or len(all_papers) < additional_count:
+                if round_num < max_expansion_rounds - 1:  # 不是最后一轮
+                    # 扩展时间范围：向更早的时间扩展
+                    current_search_end_date = current_search_start_date - timedelta(days=1)
+                    current_search_start_date = current_search_start_date - timedelta(days=expansion_days)
+                    logger.info(f"第 {round_num + 1} 轮未找到足够新论文，扩展时间范围到 {current_search_start_date.date()} 到 {current_search_end_date.date()}")
+                else:
+                    logger.info("已达到最大搜索轮数，停止搜索")
+            else:
+                # 找到了一些新论文，但还不够，可以继续在当前时间范围内搜索更多批次
+                logger.info(f"第 {round_num + 1} 轮找到 {len(new_papers)} 篇新论文，总共 {len(all_papers)} 篇")
+
+        logger.info(f"搜索完成，总共找到 {len(all_papers)} 篇新候选论文")
         saved_count = 0
 
-        for paper in papers:
+        for paper in all_papers:
             if self.db.save_paper(paper):
                 saved_count += 1
                 logger.info(f"保存论文: {paper.title} (ID: {paper.arxiv_id})")
@@ -390,6 +482,163 @@ class ArxivScraper:
 
         logger.info(f"增量爬取完成，成功保存 {saved_count} 篇论文")
         return saved_count
+
+    def _search_in_time_range(self, keywords: List[str], start_date: datetime, end_date: datetime, search_limit: int) -> List[Paper]:
+        """
+        在指定时间范围内进行连续搜索
+
+        Args:
+            keywords: 搜索关键词列表
+            start_date: 搜索开始日期
+            end_date: 搜索结束日期
+            search_limit: 搜索限制数量
+
+        Returns:
+            找到的论文列表
+        """
+        all_papers = []
+        batch_size = 30  # arXiv API单次最多返回30篇
+
+        # 计算需要多少批次
+        num_batches = (search_limit + batch_size - 1) // batch_size
+
+        for batch in range(num_batches):
+            start_index = batch * batch_size
+            batch_limit = min(batch_size, search_limit - start_index)
+
+            logger.debug(f"执行第 {batch + 1}/{num_batches} 批连续搜索，从索引 {start_index} 开始，获取 {batch_limit} 篇")
+
+            # 使用连续搜索
+            batch_papers = self.search_papers_continuous_with_range(
+                keywords=keywords,
+                max_results=batch_limit,
+                start_index=start_index,
+                start_date=start_date,
+                end_date=end_date
+            )
+
+            if not batch_papers:
+                logger.debug("本批次没有找到论文，停止本轮搜索")
+                break
+
+            all_papers.extend(batch_papers)
+
+            # 如果本批次找到的论文少于请求数量，可能已经到了搜索结果的末尾
+            if len(batch_papers) < batch_limit:
+                logger.debug(f"本批次返回论文数量 ({len(batch_papers)}) 少于请求数量 ({batch_limit})，已到达搜索结果末尾")
+                break
+
+            # 避免请求过于频繁
+            import time
+            time.sleep(1)
+
+        logger.debug(f"时间范围 {start_date.date()} 到 {end_date.date()} 搜索完成，找到 {len(all_papers)} 篇论文")
+        return all_papers
+
+    def search_papers_continuous_with_range(self, keywords: List[str], max_results: int = 30,
+                                         start_index: int = 0, start_date: datetime = None,
+                                         end_date: datetime = None) -> List[Paper]:
+        """
+        使用arXiv API的start参数进行连续搜索，支持自定义时间范围
+
+        Args:
+            keywords: 搜索关键词列表
+            max_results: 最大结果数
+            start_index: 开始索引（用于分页）
+            start_date: 搜索开始日期
+            end_date: 搜索结束日期
+
+        Returns:
+            论文列表
+        """
+        # 构建搜索查询
+        query_parts = []
+        for keyword in keywords:
+            # 使用all:字段在标题、摘要和作者中搜索
+            query_parts.append(f'all:"{keyword}"')
+
+        # 使用AND关系，要求论文同时包含所有关键词
+        search_query = " AND ".join(query_parts)
+
+        # 使用自定义时间范围
+        if end_date is None:
+            end_date = datetime.now()
+        if start_date is None:
+            start_date = end_date - timedelta(days=30)
+
+        # 构建完整的查询
+        full_query = f'({search_query}) AND submittedDate:[{start_date.strftime("%Y%m%d%H%M%S")} TO {end_date.strftime("%Y%m%d%H%M%S")}]'
+
+        params = {
+            'search_query': full_query,
+            'start': start_index,  # 关键：使用start参数实现连续搜索
+            'max_results': max_results,
+            'sortBy': 'submittedDate',
+            'sortOrder': 'descending'  # 按提交日期降序排列，确保最新的在前
+        }
+
+        logger.debug(f"连续搜索查询: {full_query}")
+        logger.debug(f"搜索参数: start={start_index}, max_results={max_results}")
+
+        try:
+            response = requests.get(self.base_url, params=params, headers=self.headers, timeout=30)
+            response.raise_for_status()
+
+            feed = feedparser.parse(response.content)
+            papers = []
+
+            for entry in feed.entries:
+                try:
+                    # 提取作者信息
+                    authors = []
+                    if hasattr(entry, 'authors') and entry.authors:
+                        authors = [author.name for author in entry.authors]
+                    elif hasattr(entry, 'author'):
+                        authors = [entry.author]
+
+                    # 提取分类信息
+                    categories = []
+                    if hasattr(entry, 'tags') and entry.tags:
+                        categories = [tag.term for tag in entry.tags]
+
+                    # 从arXiv ID中提取准确的提交日期
+                    arxiv_id = entry.id.split('/')[-1]
+                    published_date = self.get_submission_date_from_page(arxiv_id)
+
+                    # 如果无法从页面获取日期，使用entry中的日期作为备用
+                    if not published_date:
+                        if hasattr(entry, 'published'):
+                            published_date = entry.published
+                        elif hasattr(entry, 'updated'):
+                            published_date = entry.updated
+                        else:
+                            published_date = datetime.now()
+                        logger.warning(f"无法从页面获取日期，使用备用日期: {arxiv_id} -> {published_date}")
+
+                    paper = Paper(
+                        title=entry.title,
+                        authors=authors,
+                        abstract=getattr(entry, 'summary', ''),
+                        arxiv_id=arxiv_id,
+                        published_date=published_date,
+                        categories=categories,
+                        pdf_url=entry.link.replace('/abs/', '/pdf/') + '.pdf'
+                    )
+                    papers.append(paper)
+
+                except Exception as e:
+                    logger.error(f"解析论文条目失败: {e}")
+                    continue
+
+            logger.info(f"连续搜索完成: 索引 {start_index}-{start_index + len(papers)}，找到 {len(papers)} 篇论文")
+            return papers
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"连续搜索请求失败: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"连续搜索失败: {e}")
+            return []
 
     def get_trending_topics(self, days: int = 7) -> List[str]:
         """
@@ -418,4 +667,4 @@ class ArxivScraper:
             all_words.extend(words)
 
         word_freq = Counter(all_words)
-        return [word for word, count in word_freq.most_common(10)]
+        return [word for word, _ in word_freq.most_common(10)]

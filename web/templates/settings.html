@@ -207,10 +207,18 @@
                     </div>
                     <div class="col-md-3 mb-2">
                         <form method="post" action="{{ url_for('scrape_more') }}" class="d-inline">
-                            <input type="hidden" name="additional_count" value="10">
-                            <button type="submit" class="btn btn-success w-100">
-                                <i class="fas fa-plus me-2"></i>增量爬取
-                            </button>
+                            <div class="input-group input-group-sm">
+                                <input type="number"
+                                       name="additional_count"
+                                       value="10"
+                                       min="1"
+                                       max="200"
+                                       class="form-control"
+                                       placeholder="数量">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-plus me-1"></i>爬取
+                                </button>
+                            </div>
                         </form>
                     </div>
                     <div class="col-md-3 mb-2">

@@ -34,13 +34,26 @@ class PaperScheduler:
                     logger.info("开始生成论文摘要...")
                     analyzed_papers = self.analyzer.analyze_papers_batch(recent_papers)
 
-                    # 生成研究洞察
-                    insights = self.analyzer.get_research_insights(1)
-                    if insights:
-                        logger.info(f"今日研究洞察：\n{insights}")
+                # 数据库更新后，自动更新洞察缓存（不同时间范围的）
+                logger.info("数据库已更新，开始自动更新洞察缓存...")
 
-                        # 保存洞察到文件
-                        self._save_daily_insights(insights, start_time)
+                # 更新不同时间范围的洞察
+                for days in [1, 7, 30]:
+                    try:
+                        updated = self.analyzer.auto_update_insights_if_needed(days)
+                        if updated:
+                            logger.info(f"成功更新 {days} 天洞察缓存")
+                        else:
+                            logger.info(f"{days} 天洞察缓存已是最新，无需更新")
+                    except Exception as e:
+                        logger.error(f"更新 {days} 天洞察缓存失败: {e}")
+
+                # 生成今日洞察用于文件保存
+                insights = self.analyzer.get_research_insights(1)
+                if insights and not insights.startswith("生成洞察失败"):
+                    logger.info(f"今日研究洞察：\n{insights}")
+                    # 保存洞察到文件
+                    self._save_daily_insights(insights, start_time)
 
             end_time = datetime.now()
             duration = (end_time - start_time).total_seconds()
