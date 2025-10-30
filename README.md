@@ -17,7 +17,22 @@
 - Python 3.8+
 - pip包管理器
 
-### 方式一：克隆仓库并可编辑安装
+### 方式一：快速安装
+
+```bash
+# 克隆仓库
+git clone https://github.com/DingyangLyu/AutoMatResearch.git
+cd AutoMatResearch
+
+# windows环境
+install.bat
+
+# linux环境
+bash install.sh
+# 编辑.env文件，填入你的DeepSeek API密钥
+```
+
+### 方式二：克隆仓库并可编辑安装
 
 ```bash
 # 克隆仓库
@@ -37,7 +52,7 @@ cp .env.example .env
 # 编辑.env文件，填入你的DeepSeek API密钥
 ```
 
-### 方式二：传统安装方式
+### 方式三：传统安装方式
 
 ```bash
 # 克隆仓库
