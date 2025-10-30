@@ -37,6 +37,7 @@ dependencies = [
     "python-dateutil>=2.8.2",
     "lxml>=4.9.0",
     "flask>=2.3.0",
+    "markdown>=3.4.0",
 ]
 
 [project.optional-dependencies]
