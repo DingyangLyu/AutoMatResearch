@@ -18,10 +18,17 @@ from config.settings import settings
 logger = logging.getLogger(__name__)
 
 class ArxivScraper:
-    def __init__(self):
+    def __init__(self, keyword: str = None):
         self.base_url = "http://export.arxiv.org/api/query"
         self.arxiv_base_url = "https://arxiv.org/abs/"
-        self.db = DatabaseManager(settings.database_path)
+        self.keyword = keyword
+        # 根据关键词获取数据库管理器
+        if keyword:
+            from src.data.keyword_manager import keyword_manager
+            db_manager = keyword_manager.get_database_manager(keyword)
+            self.db = db_manager
+        else:
+            self.db = DatabaseManager(settings.database_path)
         # 设置请求头，模拟浏览器
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -132,8 +139,13 @@ class ArxivScraper:
         # 构建搜索查询
         query_parts = []
         for keyword in keywords:
-            # 使用all:字段在标题、摘要和作者中搜索
-            query_parts.append(f'all:"{keyword}"')
+            # 检查关键词是否已经包含搜索字段前缀（如 all:, ti:, au: 等）
+            if any(keyword.startswith(prefix) for prefix in ['all:', 'ti:', 'au:', 'cat:']):
+                # 如果已经包含字段前缀，直接使用（支持复杂查询语法）
+                query_parts.append(f'({keyword})')
+            else:
+                # 使用all:字段在标题、摘要和作者中搜索
+                query_parts.append(f'all:"{keyword}"')
 
         # 使用AND关系，要求论文同时包含所有关键词
         search_query = " AND ".join(query_parts)
@@ -554,8 +566,13 @@ class ArxivScraper:
         # 构建搜索查询
         query_parts = []
         for keyword in keywords:
-            # 使用all:字段在标题、摘要和作者中搜索
-            query_parts.append(f'all:"{keyword}"')
+            # 检查关键词是否已经包含搜索字段前缀（如 all:, ti:, au: 等）
+            if any(keyword.startswith(prefix) for prefix in ['all:', 'ti:', 'au:', 'cat:']):
+                # 如果已经包含字段前缀，直接使用（支持复杂查询语法）
+                query_parts.append(f'({keyword})')
+            else:
+                # 使用all:字段在标题、摘要和作者中搜索
+                query_parts.append(f'all:"{keyword}"')
 
         # 使用AND关系，要求论文同时包含所有关键词
         search_query = " AND ".join(query_parts)

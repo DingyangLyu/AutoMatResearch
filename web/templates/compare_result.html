@@ -2,74 +2,354 @@
 
 {% block title %}论文比较结果 - arXiv论文爬取Agent{% endblock %}
 
+{% block extra_css %}
+<style>
+/* 比较结果页面专用样式 */
+.result-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 2.5rem 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.result-header h1 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.result-header h1 i {
+    font-size: 2.2rem;
+}
+
+.result-header .subtitle {
+    margin-top: 0.5rem;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* 结果卡片样式 */
+.result-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.result-card .card-header {
+    border: none;
+    padding: 1.5rem 2rem;
+    font-weight: 600;
+    font-size: 1.2rem;
+    position: relative;
+}
+
+.result-card .card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 2rem;
+    right: 2rem;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.result-card .card-body {
+    padding: 2rem;
+}
+
+/* 分析内容样式 */
+.analysis-content {
+    background: linear-gradient(145deg, #f8f9fa, #ffffff);
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+    line-height: 1.8;
+    font-size: 0.95rem;
+    white-space: pre-line;
+}
+
+.analysis-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #007bff, #6610f2);
+    border-radius: 12px 12px 0 0;
+}
+
+/* 论文标签样式 */
+.paper-link {
+    background: linear-gradient(135deg, #007bff, #6610f2);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 500;
+    margin: 0.25rem;
+    display: inline-block;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.paper-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+/* 功能卡片样式 */
+.feature-card {
+    border-left: 4px solid #007bff;
+    background: #f8f9ff;
+}
+
+/* 按钮组样式 */
+.btn-group-custom .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-group-custom .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .result-header {
+        padding: 2rem 1rem;
+    }
+
+    .result-header h1 {
+        font-size: 2rem;
+    }
+
+    .result-card .card-body {
+        padding: 1.5rem;
+    }
+}
+
+/* 错误消息样式 */
+.error-content {
+    background: #f8f9fa;
+    border-left: 4px solid #ffc107;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #495057;
+}
+
+.alert {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">
-        <i class="fas fa-balance-scale"></i> 论文比较结果
+<!-- 页面标题 -->
+<div class="result-header">
+    <h1>
+        <i class="fas fa-balance-scale"></i>
+        论文比较结果
     </h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <a href="{{ url_for('compare') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i> 返回比较
-        </a>
-        <a href="{{ url_for('papers') }}" class="btn btn-outline-primary">
-            <i class="fas fa-book"></i> 论文列表
-        </a>
+    <p class="subtitle mb-0">AI深度分析结果，助您快速了解论文差异</p>
+</div>
+
+<!-- 论文信息 -->
+<div class="alert alert-info border-0 bg-light mb-4">
+    <h6 class="alert-heading">
+        <i class="fas fa-layer-group me-2"></i>参与比较的论文
+    </h6>
+    <div class="d-flex flex-wrap gap-2">
+        {% for id in paper_ids %}
+            <a href="https://arxiv.org/abs/{{ id }}" target="_blank" class="paper-link">
+                <i class="fas fa-file-alt me-1"></i>{{ id }}
+            </a>
+        {% endfor %}
+    </div>
+    <div class="mt-2">
+        <small class="text-muted">
+            <i class="fas fa-robot me-1"></i>
+            由DeepSeek AI基于论文全文内容生成的深度比较分析
+        </small>
     </div>
 </div>
 
-<div class="alert alert-info">
-    <strong>比较论文：</strong>
-    {% for id in paper_ids %}
-        <span class="badge bg-primary me-2">
-            <a href="https://arxiv.org/abs/{{ id }}" target="_blank" style="color: white; text-decoration: none;">
-                {{ id }}
-            </a>
-        </span>
-    {% endfor %}
-</div>
-
-<div class="card">
-    <div class="card-header">
-        <h5><i class="fas fa-chart-line"></i> AI生成的比较分析</h5>
+<!-- AI分析结果 -->
+<div class="card result-card">
+    <div class="card-header bg-success text-white">
+        <h5><i class="fas fa-chart-line me-2"></i>AI智能比较分析</h5>
     </div>
     <div class="card-body">
-        <div class="bg-light p-4 rounded" style="white-space: pre-line; line-height: 1.6;">
-            {{ comparison }}
+        <!-- 工具栏 -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">
+                <i class="fas fa-clipboard-check me-2 text-success"></i>详细比较分析
+            </h6>
+            <div class="btn-group btn-group-sm btn-group-custom">
+                <button type="button" class="btn btn-outline-primary" onclick="toggleView('expand')">
+                    <i class="fas fa-expand"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="copyToClipboard()">
+                    <i class="fas fa-copy"></i>
+                </button>
+                <button type="button" class="btn btn-outline-info" onclick="window.print()">
+                    <i class="fas fa-print"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 分析内容 -->
+        <div class="analysis-content" id="analysisContent">
+            {% if comparison and "未找到" in comparison %}
+                <!-- 错误消息格式化显示 -->
+                <div class="alert alert-warning border-0" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>论文查找失败
+                    </h6>
+                    <div class="error-content" style="white-space: pre-line;">{{ comparison }}</div>
+                    <hr>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="{{ url_for('papers') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-list me-1"></i>查看可用论文
+                        </a>
+                        <a href="{{ url_for('compare') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-redo me-1"></i>重新比较
+                        </a>
+                    </div>
+                </div>
+            {% elif comparison and "需要至少两篇论文" in comparison %}
+                <!-- 论文数量不足提示 -->
+                <div class="alert alert-info border-0" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle me-2"></i>论文数量不足
+                    </h6>
+                    <p class="mb-2">{{ comparison }}</p>
+                    <hr>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('compare') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>添加更多论文
+                        </a>
+                        <a href="{{ url_for('papers') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-list me-1"></i>浏览论文库
+                        </a>
+                    </div>
+                </div>
+            {% elif comparison and "错误" in comparison %}
+                <!-- 其他错误 -->
+                <div class="alert alert-danger border-0" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-times-circle me-2"></i>比较分析失败
+                    </h6>
+                    <p class="mb-2">{{ comparison }}</p>
+                    <hr>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('compare') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-redo me-1"></i>重试
+                        </a>
+                        <a href="{{ url_for('papers') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-list me-1"></i>查看论文
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <!-- 正常比较结果 -->
+                {{ comparison }}
+            {% endif %}
+        </div>
+
+        <!-- 时间戳 -->
+        <div class="text-muted small mt-3">
+            <i class="fas fa-clock me-1"></i>
+            生成时间：{{ moment().format('YYYY-MM-DD HH:mm:ss') if moment is defined else 'N/A' }}
         </div>
     </div>
 </div>
 
+<!-- 功能说明和操作区域 -->
 <div class="row mt-4">
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h6><i class="fas fa-lightbulb"></i> 分析要点</h6>
+        <div class="card result-card feature-card">
+            <div class="card-header bg-info text-white">
+                <h6><i class="fas fa-lightbulb me-2"></i>分析要点</h6>
             </div>
             <div class="card-body">
-                <ul>
-                    <li>本分析基于DeepSeek AI对论文内容的深度理解</li>
-                    <li>重点关注方法论的差异和创新点</li>
-                    <li>提供了实用的比较结论和建议</li>
-                    <li>可作为研究参考和决策依据</li>
+                <ul class="mb-3">
+                    <li><i class="fas fa-robot text-info me-2"></i>本分析基于DeepSeek AI对论文全文的深度理解</li>
+                    <li><i class="fas fa-microscope text-primary me-2"></i>重点关注方法论的差异和创新点</li>
+                    <li><i class="fas fa-chart-line text-success me-2"></i>提供了实用的比较结论和建议</li>
+                    <li><i class="fas fa-bookmark text-warning me-2"></i>可作为研究参考和决策依据</li>
                 </ul>
+
+                <div class="alert alert-light border-0 mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        分析质量：高 | 深度：深入 | 准确性：优秀
+                    </small>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h6><i class="fas fa-share"></i> 分享结果</h6>
+        <div class="card result-card feature-card">
+            <div class="card-header bg-primary text-white">
+                <h6><i class="fas fa-share-alt me-2"></i>分享与导出</h6>
             </div>
             <div class="card-body">
-                <div class="d-grid gap-2">
-                    <button onclick="copyToClipboard()" class="btn btn-outline-primary">
-                        <i class="fas fa-copy"></i> 复制分析结果
+                <div class="d-grid gap-2 mb-3">
+                    <button onclick="copyToClipboard()" class="btn btn-primary">
+                        <i class="fas fa-copy me-2"></i> 复制分析结果
                     </button>
                     <button onclick="window.print()" class="btn btn-outline-secondary">
-                        <i class="fas fa-print"></i> 打印结果
+                        <i class="fas fa-print me-2"></i> 打印结果
                     </button>
-                    <a href="mailto:?subject=论文比较分析&body={{ comparison|urlencode }}" class="btn btn-outline-info">
-                        <i class="fas fa-envelope"></i> 邮件分享
+                    <button onclick="exportAnalysis()" class="btn btn-outline-success">
+                        <i class="fas fa-download me-2"></i> 导出文件
+                    </button>
+                    <button onclick="shareAnalysis()" class="btn btn-outline-info">
+                        <i class="fas fa-share-alt me-2"></i> 分享结果
+                    </button>
+                </div>
+
+                <!-- 快捷导航 -->
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('compare') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-plus-circle me-1"></i>继续比较
+                    </a>
+                    <a href="{{ url_for('papers') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-book me-1"></i>论文列表
                     </a>
                 </div>
             </div>
@@ -77,12 +357,145 @@
     </div>
 </div>
 
+<!-- Toast容器 -->
+<div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
+// Toast提示功能
+function showToast(message, type = 'info') {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+
+    const toastContainer = document.getElementById('toastContainer');
+    const toastElement = document.createElement('div');
+    toastElement.innerHTML = toastHtml;
+    toastContainer.appendChild(toastElement);
+
+    const toast = new bootstrap.Toast(toastElement.querySelector('.toast'));
+    toast.show();
+
+    setTimeout(() => {
+        toastElement.remove();
+    }, 5000);
+}
+
+// 复制到剪贴板
 function copyToClipboard() {
-    const text = document.querySelector('.bg-light').textContent;
-    navigator.clipboard.writeText(text).then(function() {
-        alert('分析结果已复制到剪贴板');
+    const content = document.getElementById('analysisContent').textContent;
+    navigator.clipboard.writeText(content).then(function() {
+        showToast('分析结果已复制到剪贴板', 'success');
+    }).catch(function(err) {
+        console.error('复制失败:', err);
+        showToast('复制失败，请手动复制', 'error');
     });
 }
+
+// 切换视图
+function toggleView(action) {
+    const content = document.getElementById('analysisContent');
+    if (action === 'expand') {
+        if (content.style.maxHeight === '1000px') {
+            content.style.maxHeight = 'none';
+            showToast('已展开完整视图', 'info');
+        } else {
+            content.style.maxHeight = '1000px';
+            content.style.overflow = 'auto';
+            showToast('已切换到紧凑视图', 'info');
+        }
+    }
+}
+
+// 导出分析
+function exportAnalysis() {
+    const content = document.getElementById('analysisContent').textContent;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `论文比较分析_${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    showToast('分析结果已导出', 'success');
+}
+
+// 分享分析
+function shareAnalysis() {
+    const content = document.getElementById('analysisContent').textContent.substring(0, 200);
+    const url = window.location.href;
+
+    if (navigator.share) {
+        navigator.share({
+            title: '论文比较分析结果',
+            text: content,
+            url: url
+        }).then(() => {
+            showToast('分享成功', 'success');
+        }).catch((error) => {
+            console.log('分享取消或失败:', error);
+        });
+    } else {
+        // 降级到复制链接
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('链接已复制，可以分享给他人', 'success');
+        });
+    }
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 添加键盘快捷键
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 'c':
+                    e.preventDefault();
+                    copyToClipboard();
+                    break;
+                case 'p':
+                    e.preventDefault();
+                    window.print();
+                    break;
+                case 'e':
+                    e.preventDefault();
+                    exportAnalysis();
+                    break;
+            }
+        }
+    });
+
+    // 添加打印样式
+    const printStyles = document.createElement('style');
+    printStyles.textContent = `
+        @media print {
+            .result-header, .alert, .btn-group {
+                display: none !important;
+            }
+            .analysis-content {
+                max-height: none !important;
+                overflow: visible !important;
+                font-size: 12pt !important;
+                line-height: 1.6 !important;
+            }
+            .card {
+                break-inside: avoid;
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+        }
+    `;
+    document.head.appendChild(printStyles);
+});
 </script>
 {% endblock %}

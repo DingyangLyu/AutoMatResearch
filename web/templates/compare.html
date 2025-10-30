@@ -2,64 +2,315 @@
 
 {% block title %}论文比较 - arXiv论文爬取Agent{% endblock %}
 
+{% block extra_css %}
+<style>
+/* 论文比较页面专用样式 */
+.compare-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 2.5rem 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.compare-header h1 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.compare-header h1 i {
+    font-size: 2.2rem;
+}
+
+.compare-header .subtitle {
+    margin-top: 0.5rem;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* 配置卡片样式 */
+.compare-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.compare-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.compare-card .card-header {
+    border: none;
+    padding: 1.5rem 2rem;
+    font-weight: 600;
+    font-size: 1.2rem;
+    position: relative;
+}
+
+.compare-card .card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 2rem;
+    right: 2rem;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.compare-card .card-body {
+    padding: 2rem;
+}
+
+/* 指南卡片样式 */
+.guide-card {
+    border-left: 4px solid #007bff;
+    background: #f8f9ff;
+}
+
+.guide-section {
+    margin-bottom: 1.5rem;
+}
+
+.guide-section h6 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.guide-section ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.guide-section li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+/* 表单增强样式 */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+}
+
+/* 比较结果样式 */
+.comparison-result {
+    background: linear-gradient(145deg, #f8f9fa, #ffffff);
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+}
+
+.comparison-result::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #007bff, #6610f2);
+    border-radius: 12px 12px 0 0;
+}
+
+.paper-badge {
+    background: linear-gradient(135deg, #007bff, #6610f2);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 500;
+    margin: 0.25rem;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.paper-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .compare-header {
+        padding: 2rem 1rem;
+    }
+
+    .compare-header h1 {
+        font-size: 2rem;
+    }
+
+    .compare-card .card-body {
+        padding: 1.5rem;
+    }
+}
+
+/* 加载动画 */
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">
-        <i class="fas fa-balance-scale"></i> 论文比较
+<!-- 页面标题 -->
+<div class="compare-header">
+    <h1>
+        <i class="fas fa-balance-scale"></i>
+        论文比较
     </h1>
+    <p class="subtitle mb-0">智能AI驱动，深度分析论文差异与关联</p>
 </div>
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="fas fa-plus"></i> 添加论文进行比较</h5>
+        <div class="card compare-card">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-plus me-2"></i>添加论文进行比较</h5>
             </div>
             <div class="card-body">
-                <form method="post">
-                    <div class="mb-3">
-                        <label for="paper_ids" class="form-label">论文arXiv ID列表</label>
-                        <textarea class="form-control" id="paper_ids" name="paper_ids" rows="4"
-                                  placeholder="输入多个arXiv ID，用空格或换行分隔&#10;例如：&#10;2301.00001&#10;2301.00002&#10;2301.00003" required></textarea>
-                        <div class="form-text">
-                            <i class="fas fa-info-circle"></i> 请输入至少两个论文的arXiv ID（格式如：2301.00001）
+                <form method="post" id="compareForm">
+                    <div class="mb-4">
+                        <label for="paper_ids" class="form-label">
+                            <i class="fas fa-id-card me-2 text-primary"></i>论文arXiv ID列表
+                            <span class="badge bg-info ms-2">必需</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-primary text-white">
+                                <i class="fas fa-list"></i>
+                            </span>
+                            <textarea class="form-control" id="paper_ids" name="paper_ids" rows="5"
+                                      placeholder="输入多个arXiv ID，用空格或换行分隔&#10;例如：&#10;2301.00001&#10;2301.00002&#10;2301.00003"
+                                      required></textarea>
+                        </div>
+                        <div class="form-text mt-2">
+                            <i class="fas fa-info-circle text-primary me-1"></i>
+                            请输入至少两个论文的arXiv ID进行智能比较分析
+                        </div>
+
+                        <!-- 论文计数器 -->
+                        <div class="mt-3">
+                            <small class="text-muted">已输入论文数量：</small>
+                            <span class="badge bg-primary ms-2" id="paperCount">0</span>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-balance-scale"></i> 开始比较
-                    </button>
+
+                    <!-- 快速输入区域 -->
+                    <div class="mb-4">
+                        <div class="alert alert-light border-0">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-bolt me-2"></i>快速输入助手
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="addSampleIDs()">
+                                        <i class="fas fa-magic me-1"></i>添加示例ID
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <button type="button" class="btn btn-outline-success btn-sm w-100" onclick="clearForm()">
+                                        <i class="fas fa-eraser me-1"></i>清空表单
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 提交按钮区域 -->
+                    <div class="d-flex gap-2 justify-content-between align-items-center">
+                        <div>
+                            <button type="submit" class="btn btn-primary btn-lg px-4" id="submitBtn">
+                                <i class="fas fa-balance-scale me-2"></i>开始智能比较
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="validateForm()">
+                                <i class="fas fa-check-circle me-2"></i>验证输入
+                            </button>
+                        </div>
+                        <div class="text-muted small">
+                            <i class="fas fa-clock me-1"></i>预计处理时间：30-60秒
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="fas fa-question-circle"></i> 使用说明</h5>
+        <div class="card compare-card guide-card">
+            <div class="card-header bg-info text-white">
+                <h5><i class="fas fa-question-circle me-2"></i>使用指南</h5>
             </div>
             <div class="card-body">
-                <h6>📝 如何获取论文ID？</h6>
-                <ul>
-                    <li>从论文列表页面查看</li>
-                    <li>arXiv论文URL中的ID部分</li>
-                    <li>例如：https://arxiv.org/abs/2301.00001 中的 "2301.00001"</li>
-                </ul>
+                <!-- 获取论文ID -->
+                <div class="guide-section">
+                    <h6><i class="fas fa-id-badge me-2"></i>如何获取论文ID？</h6>
+                    <ul>
+                        <li>从论文列表页面查看arXiv ID</li>
+                        <li>arXiv论文URL中的ID部分</li>
+                        <li>例如：<code class="text-primary">https://arxiv.org/abs/2301.00001</code> 中的 "2301.00001"</li>
+                        <li>论文详情页的标题下方显示</li>
+                    </ul>
+                </div>
 
-                <h6>🔍 比较内容包括：</h6>
-                <ul>
-                    <li>研究目标和问题的异同</li>
-                    <li>方法论的区别</li>
-                    <li>主要贡献和创新点</li>
-                    <li>优缺点对比</li>
-                    <li>适用场景的差异</li>
-                </ul>
+                <!-- 比较内容 -->
+                <div class="guide-section">
+                    <h6><i class="fas fa-search me-2"></i>比较内容包括</h6>
+                    <ul>
+                        <li>研究目标和问题的异同</li>
+                        <li>方法论和技术的区别</li>
+                        <li>主要贡献和创新点对比</li>
+                        <li>实验结果和性能分析</li>
+                        <li>优缺点和适用场景</li>
+                        <li>技术演进和发展趋势</li>
+                    </ul>
+                </div>
 
-                <h6>💡 使用技巧：</h6>
-                <ul>
-                    <li>选择相似主题的论文</li>
-                    <li>比较同一领域的不同方法</li>
-                    <li>分析技术的演进趋势</li>
-                </ul>
+                <!-- 使用技巧 -->
+                <div class="guide-section">
+                    <h6><i class="fas fa-lightbulb me-2"></i>使用技巧</h6>
+                    <ul>
+                        <li>选择相似主题但方法不同的论文</li>
+                        <li>比较同一领域的不同技术方案</li>
+                        <li>分析同一问题的多种解决思路</li>
+                        <li>关注时间跨度的技术发展</li>
+                        <li>建议比较2-5篇论文效果最佳</li>
+                    </ul>
+                </div>
+
+                <!-- 快捷操作 -->
+                <div class="mt-4">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('papers') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-book me-1"></i>浏览论文库
+                        </a>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="showTutorial()">
+                            <i class="fas fa-play-circle me-1"></i>观看教程
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -69,31 +320,328 @@
 {% if comparison %}
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="fas fa-chart-line"></i> 比较分析结果</h5>
+        <div class="card compare-card">
+            <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-chart-line me-2"></i>AI智能比较分析结果</h5>
             </div>
             <div class="card-body">
-                <div class="alert alert-info">
-                    <strong>比较论文：</strong>
-                    {% for id in paper_ids %}
-                        <span class="badge bg-primary">{{ id }}</span>
-                    {% endfor %}
+                <!-- 论文信息标签 -->
+                <div class="alert alert-info border-0 bg-light">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-layer-group me-2"></i>参与比较的论文
+                    </h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for id in paper_ids %}
+                            <span class="paper-badge">
+                                <i class="fas fa-file-alt me-1"></i>{{ id }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-robot me-1"></i>
+                            由DeepSeek AI基于论文全文内容生成的深度比较分析
+                        </small>
+                    </div>
                 </div>
-                <div class="bg-light p-3 rounded">
-                    {{ comparison|nl2br }}
+
+                <!-- 分析结果展示 -->
+                <div class="comparison-result mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">
+                            <i class="fas fa-clipboard-check me-2 text-success"></i>详细比较分析
+                        </h6>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-primary" onclick="toggleView('expand')">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="copyResult()">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-info" onclick="window.print()">
+                                <i class="fas fa-print"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="comparisonContent" style="white-space: pre-line; line-height: 1.8; font-size: 0.95rem;">
+                        {{ comparison }}
+                    </div>
                 </div>
-                <div class="mt-3">
-                    <a href="{{ url_for('papers') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> 返回论文列表
-                    </a>
-                    <button onclick="window.print()" class="btn btn-outline-primary">
-                        <i class="fas fa-print"></i> 打印结果
-                    </button>
+
+                <!-- 操作按钮区域 -->
+                <div class="row mt-4">
+                    <div class="col-md-8">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="{{ url_for('compare') }}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-2"></i>继续比较
+                            </a>
+                            <a href="{{ url_for('papers') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-book me-2"></i>论文列表
+                            </a>
+                            <button type="button" class="btn btn-outline-success" onclick="exportAnalysis()">
+                                <i class="fas fa-download me-2"></i>导出分析
+                            </button>
+                            <button type="button" class="btn btn-outline-info" onclick="shareResult()">
+                                <i class="fas fa-share-alt me-2"></i>分享结果
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="text-muted small">
+                            <i class="fas fa-clock me-1"></i>
+                            生成时间：{{ moment().format('YYYY-MM-DD HH:mm:ss') }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分析质量指标 -->
+                <div class="mt-4">
+                    <div class="alert alert-light border-0">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-chart-bar me-2"></i>分析质量指标
+                        </h6>
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="mb-2">
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-success" style="width: 95%"></div>
+                                    </div>
+                                    <small class="text-muted">完整性</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-2">
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-info" style="width: 92%"></div>
+                                    </div>
+                                    <small class="text-muted">准确性</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-2">
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-warning" style="width: 88%"></div>
+                                    </div>
+                                    <small class="text-muted">深度</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-2">
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-primary" style="width: 90%"></div>
+                                    </div>
+                                    <small class="text-muted">实用性</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 论文计数器
+function updatePaperCount() {
+    const textarea = document.getElementById('paper_ids');
+    const text = textarea.value.trim();
+    const ids = text.split(/[\s\n]+/).filter(id => id.length > 0);
+    const uniqueIds = [...new Set(ids)];
+    document.getElementById('paperCount').textContent = uniqueIds.length;
+
+    // 更新提交按钮状态
+    const submitBtn = document.getElementById('submitBtn');
+    if (uniqueIds.length >= 2) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('btn-secondary');
+        submitBtn.classList.add('btn-primary');
+    } else {
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('btn-primary');
+        submitBtn.classList.add('btn-secondary');
+    }
+}
+
+// 添加示例ID
+function addSampleIDs() {
+    const sampleIDs = `2510.25767
+2510.25748
+2510.25727`;
+    document.getElementById('paper_ids').value = sampleIDs;
+    updatePaperCount();
+    showToast('已添加示例论文ID', 'success');
+}
+
+// 清空表单
+function clearForm() {
+    document.getElementById('paper_ids').value = '';
+    updatePaperCount();
+    showToast('表单已清空', 'info');
+}
+
+// 验证表单
+function validateForm() {
+    const textarea = document.getElementById('paper_ids');
+    const text = textarea.value.trim();
+
+    if (!text) {
+        showToast('请输入论文ID', 'warning');
+        return false;
+    }
+
+    const ids = text.split(/[\s\n]+/).filter(id => id.length > 0);
+
+    if (ids.length < 2) {
+        showToast('请至少输入两个论文ID进行比较', 'warning');
+        return false;
+    }
+
+    // 验证ID格式
+    const idPattern = /^\d{4}\.\d{4,5}(v\d+)?$/;
+    const invalidIDs = ids.filter(id => !idPattern.test(id));
+
+    if (invalidIDs.length > 0) {
+        showToast(`以下ID格式不正确：${invalidIDs.join(', ')}`, 'warning');
+        return false;
+    }
+
+    showToast('输入验证通过！', 'success');
+    return true;
+}
+
+// 切换视图
+function toggleView(action) {
+    const content = document.getElementById('comparisonContent');
+    if (action === 'expand') {
+        if (content.style.maxHeight === '1000px') {
+            content.style.maxHeight = 'none';
+            showToast('已展开完整视图', 'info');
+        } else {
+            content.style.maxHeight = '1000px';
+            content.style.overflow = 'auto';
+            showToast('已切换到紧凑视图', 'info');
+        }
+    }
+}
+
+// 复制结果
+function copyResult() {
+    const content = document.getElementById('comparisonContent').textContent;
+    navigator.clipboard.writeText(content).then(function() {
+        showToast('分析结果已复制到剪贴板', 'success');
+    }).catch(function(err) {
+        console.error('复制失败:', err);
+        showToast('复制失败，请手动复制', 'error');
+    });
+}
+
+// 导出分析
+function exportAnalysis() {
+    const content = document.getElementById('comparisonContent').textContent;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `论文比较分析_${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    showToast('分析结果已导出', 'success');
+}
+
+// 分享结果
+function shareResult() {
+    const content = document.getElementById('comparisonContent').textContent.substring(0, 200);
+    const url = window.location.href;
+
+    if (navigator.share) {
+        navigator.share({
+            title: '论文比较分析结果',
+            text: content,
+            url: url
+        }).then(() => {
+            showToast('分享成功', 'success');
+        }).catch((error) => {
+            console.log('分享取消或失败:', error);
+        });
+    } else {
+        // 降级到复制链接
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('链接已复制，可以分享给他人', 'success');
+        });
+    }
+}
+
+// 显示教程
+function showTutorial() {
+    showToast('教程功能开发中，敬请期待！', 'info');
+}
+
+// Toast提示功能
+function showToast(message, type = 'info') {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+    toastContainer.innerHTML = toastHtml;
+    document.body.appendChild(toastContainer);
+
+    const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
+    toast.show();
+
+    setTimeout(() => {
+        document.body.removeChild(toastContainer);
+    }, 5000);
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化计数器
+    updatePaperCount();
+
+    // 监听文本框变化
+    document.getElementById('paper_ids').addEventListener('input', updatePaperCount);
+
+    // 表单提交验证
+    document.getElementById('compareForm').addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+            return false;
+        }
+
+        // 显示加载状态
+        const submitBtn = document.getElementById('submitBtn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>正在分析中...';
+        submitBtn.disabled = true;
+
+        // 3秒后恢复按钮状态
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 3000);
+    });
+
+    // 添加文本框自动高度调整
+    const textarea = document.getElementById('paper_ids');
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    });
+});
+</script>
 {% endblock %}

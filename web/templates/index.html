@@ -231,9 +231,9 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="card-title mb-1">{{ keywords|length }}</h3>
+                        <h3 class="card-title mb-1">{{ current_keyword.display_name }}</h3>
                         <p class="card-text mb-0">
-                            <i class="fas fa-tags me-2"></i>活跃关键词
+                            <i class="fas fa-tags me-2"></i>当前关键词
                         </p>
                     </div>
                     <div class="icon-holder">
@@ -286,21 +286,51 @@
     <div class="col-md-6">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-gradient-info text-white">
-                <h5 class="mb-0"><i class="fas fa-tags me-2"></i>当前关键词</h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-tags me-2"></i>当前关键词</h5>
+                    <span class="badge bg-light text-dark">{{ all_keywords|length }}</span>
+                </div>
             </div>
             <div class="card-body d-flex flex-column">
                 <div class="flex-grow-1">
-                    {% if keywords %}
-                        <div class="keywords-container mb-3">
-                            {% for keyword in keywords %}
-                                <span class="badge bg-primary keyword-tag">{{ keyword }}</span>
-                            {% endfor %}
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-bookmark text-primary me-2"></i>
+                            <strong>{{ current_keyword.display_name }}</strong>
+                            <span class="badge bg-success ms-2">当前使用</span>
                         </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">暂无关键词</p>
+                        <div class="text-muted small mb-2">
+                            <i class="fas fa-hashtag me-1"></i>{{ current_keyword.name }}
                         </div>
+                        <div class="text-muted small">
+                            <i class="fas fa-search me-1"></i>{{ current_keyword.search_query }}
+                        </div>
+                    </div>
+
+                    {% if all_keywords|length > 1 %}
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">切换关键词:</label>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle w-100" type="button" id="keywordDropdown" data-bs-toggle="dropdown">
+                                <i class="fas fa-exchange-alt me-1"></i>选择关键词
+                            </button>
+                            <ul class="dropdown-menu w-100">
+                                {% for keyword in all_keywords %}
+                                    {% if keyword.name != current_keyword.name %}
+                                    <li>
+                                        <form method="post" action="{{ url_for('set_keyword') }}" class="mb-0">
+                                            <input type="hidden" name="keyword" value="{{ keyword.name }}">
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fas fa-tag me-2"></i>{{ keyword.display_name }}
+                                                <span class="text-muted small ms-2">({{ keyword.paper_count }}篇)</span>
+                                            </button>
+                                        </form>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
                 <div class="mt-auto pt-3">
@@ -320,7 +350,7 @@
     <div class="card-header bg-gradient-secondary text-white">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
-                <i class="fas fa-book-open me-2"></i>最近论文 (最新5篇)
+                <i class="fas fa-book-open me-2"></i>最近论文 (最新10篇)
             </h5>
             <span class="badge bg-light text-dark">{{ recent_papers|length if recent_papers else 0 }} 篇</span>
         </div>

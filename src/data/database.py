@@ -20,7 +20,8 @@ class Paper:
     created_at: Optional[datetime] = None
 
 class DatabaseManager:
-    def __init__(self, db_path: str = "arxiv_papers.db"):
+    def __init__(self, db_path: str = "arxiv_papers.db", keyword: str = "default"):
+        self.keyword = keyword
         self.db_path = db_path
         self.init_database()
 
@@ -121,6 +122,40 @@ class DatabaseManager:
                 FROM papers
                 ORDER BY published_date DESC
             """)
+
+            papers = []
+            for row in cursor.fetchall():
+                papers.append(Paper(
+                    title=row[0],
+                    authors=row[1].split(','),
+                    abstract=row[2],
+                    arxiv_id=row[3],
+                    published_date=datetime.fromisoformat(row[4]),
+                    categories=row[5].split(','),
+                    pdf_url=row[6],
+                    summary=row[7],
+                    created_at=datetime.fromisoformat(row[8]) if row[8] else None
+                ))
+            return papers
+
+    def get_papers_without_summary(self, limit: int = None) -> List[Paper]:
+        """获取没有摘要的论文"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+
+            # 构建查询语句
+            query = """
+                SELECT title, authors, abstract, arxiv_id, published_date, categories, pdf_url, summary, created_at
+                FROM papers
+                WHERE summary IS NULL OR summary = ''
+                ORDER BY created_at DESC
+            """
+
+            # 如果指定了限制数量，添加LIMIT子句
+            if limit:
+                query += f" LIMIT {limit}"
+
+            cursor.execute(query)
 
             papers = []
             for row in cursor.fetchall():
@@ -343,3 +378,11 @@ class DatabaseManager:
                     created_at=datetime.fromisoformat(row[8]) if row[8] else None
                 )
             return None
+
+    def get_total_papers_count(self) -> int:
+        """获取数据库中论文总数"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM papers")
+            count = cursor.fetchone()[0]
+            return count

@@ -76,6 +76,7 @@ arxiv_papers.db
 data/logs/*
 data/exports/*
 insights/*
+data/database/
 .pytest_cache/
 
 # Claude

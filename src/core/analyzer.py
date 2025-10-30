@@ -9,18 +9,25 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 class DeepSeekAnalyzer:
-    def __init__(self):
+    def __init__(self, keyword: str = None):
         self.client = openai.OpenAI(
             api_key=settings.DEEPSEEK_API_KEY,
             base_url=settings.DEEPSEEK_BASE_URL
         )
-        # 使用绝对路径确保数据库连接一致性
-        db_path = settings.DATABASE_URL.replace("sqlite:///", "")
-        if not os.path.isabs(db_path):
-            # 如果是相对路径，转换为基于项目根目录的绝对路径
-            project_root = Path(__file__).parent.parent.parent
-            db_path = project_root / db_path
-        self.db = DatabaseManager(str(db_path))
+        self.keyword = keyword
+        # 根据关键词获取数据库管理器
+        if keyword:
+            from src.data.keyword_manager import keyword_manager
+            db_manager = keyword_manager.get_database_manager(keyword)
+            self.db = db_manager
+        else:
+            # 使用绝对路径确保数据库连接一致性
+            db_path = settings.DATABASE_URL.replace("sqlite:///", "")
+            if not os.path.isabs(db_path):
+                # 如果是相对路径，转换为基于项目根目录的绝对路径
+                project_root = Path(__file__).parent.parent.parent
+                db_path = project_root / db_path
+            self.db = DatabaseManager(str(db_path))
         # 确保insights_cache表存在
         self._init_insights_cache_table()
 
@@ -49,7 +56,7 @@ class DeepSeekAnalyzer:
 
     def generate_summary(self, paper: Paper) -> Optional[str]:
         """
-        使用DeepSeek生成论文摘要
+        使用DeepSeek生成论文摘要 - 改进版本，确保翻译完整性
 
         Args:
             paper: 论文对象
@@ -58,32 +65,59 @@ class DeepSeekAnalyzer:
             生成的摘要文本
         """
         try:
+            # 根据摘要长度动态调整token限制
+            abstract_length = len(paper.abstract)
+            if abstract_length < 500:
+                max_tokens = 800  # 短摘要使用较多token
+            elif abstract_length < 1000:
+                max_tokens = 1200  # 中等长度摘要
+            else:
+                max_tokens = 2000  # 长摘要使用最大token限制
+
+            # 改进的提示词，明确要求完整性
             prompt = f"""
-请为以下论文生成一个简洁的中文摘要，突出其主要贡献、方法和结论：
+请为以下论文生成一个完整、准确的中文摘要，确保覆盖原文所有关键信息：
 
 标题：{paper.title}
 
 作者：{', '.join(paper.authors)}
 
-摘要：{paper.abstract}
+英文摘要：{paper.abstract}
 
 分类：{', '.join(paper.categories)}
 
-请用中文回答，控制在200-300字以内。
+要求：
+1. 必须完整翻译和概括原文所有重要信息，不能遗漏关键内容
+2. 突出研究背景、主要贡献、方法创新、实验结果和结论
+3. 使用专业的学术中文表达，术语准确
+4. 根据原文长度，中文摘要应在300-800字之间
+5. 确保技术细节和方法描述的完整性
+6. 如果原文很长，请适当增加摘要长度以确保信息完整性
+
+请提供完整的中文摘要：
 """
 
             response = self.client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
-                    {"role": "system", "content": "你是一个专业的学术论文分析师，擅长提取论文的核心内容和贡献。"},
+                    {"role": "system", "content": "你是专业的学术论文翻译和分析师，擅长将英文科技论文准确、完整地翻译成中文，并确保所有技术细节和专业术语的正确性。"},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=500,
-                temperature=0.3
+                max_tokens=max_tokens,
+                temperature=0.5,  # 稍微提高温度以增加表达的丰富性
+                top_p=0.9,  # 添加top_p参数控制输出的多样性
+                frequency_penalty=0.1,  # 避免重复
+                presence_penalty=0.1  # 鼓励引入新概念
             )
 
             summary = response.choices[0].message.content.strip()
-            logger.info(f"成功生成论文 {paper.arxiv_id} 的摘要")
+
+            # 检查翻译完整性 - 如果摘要过短，尝试重新生成
+            if len(summary) < 100 and abstract_length > 500:
+                logger.warning(f"论文 {paper.arxiv_id} 的摘要可能不完整，尝试重新生成")
+                return self._regenerate_summary(paper, max_tokens)
+
+            logger.info(f"成功生成论文 {paper.arxiv_id} 的摘要，长度：{len(summary)}字符")
             return summary
 
         except Exception as e:
@@ -92,7 +126,7 @@ class DeepSeekAnalyzer:
 
     def analyze_papers_batch(self, papers: List[Paper]) -> List[Paper]:
         """
-        批量分析论文并生成摘要
+        批量分析论文并生成摘要 - 改进版本，确保翻译质量
 
         Args:
             papers: 论文列表
@@ -101,6 +135,8 @@ class DeepSeekAnalyzer:
             已分析的论文列表
         """
         analyzed_papers = []
+        incomplete_count = 0
+        retry_count = 0
 
         for i, paper in enumerate(papers):
             logger.info(f"分析论文进度: {i+1}/{len(papers)} - {paper.title[:50]}...")
@@ -109,15 +145,41 @@ class DeepSeekAnalyzer:
             if not paper.summary:
                 summary = self.generate_summary(paper)
                 if summary:
+                    # 检查摘要完整性
+                    if len(summary) < 150 and len(paper.abstract) > 600:
+                        logger.warning(f"论文 {paper.arxiv_id} 摘要可能不完整，尝试重新生成")
+                        retry_summary = self._regenerate_summary(paper, 1500)
+                        if retry_summary and len(retry_summary) > len(summary):
+                            summary = retry_summary
+                            retry_count += 1
+
                     paper.summary = summary
                     # 更新数据库
                     self._update_paper_summary(paper.arxiv_id, summary)
 
+                    # 记录摘要质量统计
+                    summary_length = len(summary)
+                    abstract_length = len(paper.abstract)
+                    ratio = summary_length / abstract_length if abstract_length > 0 else 0
+
+                    if ratio < 0.2 and abstract_length > 500:
+                        logger.warning(f"论文 {paper.arxiv_id} 摘要比例偏低：{ratio:.2f} ({summary_length}/{abstract_length})")
+                        incomplete_count += 1
+                    else:
+                        logger.info(f"论文 {paper.arxiv_id} 摘要生成成功，长度比例：{ratio:.2f}")
+                else:
+                    logger.error(f"论文 {paper.arxiv_id} 摘要生成失败")
+
             analyzed_papers.append(paper)
 
-            # 添加延迟以避免API限制
+            # 添加延迟以避免API限制 - 根据摘要长度调整延迟
             import time
-            time.sleep(1)
+            delay = min(2, 1 + len(paper.abstract) / 5000)  # 长摘要增加延迟
+            time.sleep(delay)
+
+        # 报告批量分析结果
+        total_analyzed = len([p for p in analyzed_papers if p.summary])
+        logger.info(f"批量分析完成：共{len(papers)}篇，成功{total_analyzed}篇，重新生成{retry_count}篇，可能不完整{incomplete_count}篇")
 
         return analyzed_papers
 
@@ -126,13 +188,72 @@ class DeepSeekAnalyzer:
         try:
             import sqlite3
             with sqlite3.connect(self.db.db_path) as conn:
-                conn.execute(
+                cursor = conn.execute(
                     "UPDATE papers SET summary = ? WHERE arxiv_id = ?",
                     (summary, arxiv_id)
                 )
                 conn.commit()
+
+                # 检查是否真正更新了记录
+                if cursor.rowcount > 0:
+                    logger.info(f"成功更新论文摘要: {arxiv_id}")
+                    return True
+                else:
+                    logger.warning(f"未找到要更新的论文: {arxiv_id}")
+                    return False
+
         except Exception as e:
             logger.error(f"更新论文摘要失败 {arxiv_id}: {e}")
+            return False
+
+    def _regenerate_summary(self, paper: Paper, max_tokens: int) -> Optional[str]:
+        """
+        重新生成摘要 - 用于处理不完整的翻译
+
+        Args:
+            paper: 论文对象
+            max_tokens: token限制
+
+        Returns:
+            重新生成的摘要
+        """
+        try:
+            # 使用更详细的提示词重新生成
+            prompt = f"""
+以下论文的英文摘要较长，请确保完整翻译和概括所有重要信息：
+
+标题：{paper.title}
+
+英文摘要：{paper.abstract}
+
+要求：
+1. 必须完整覆盖原文所有关键信息点
+2. 详细描述研究背景、问题、方法、实验和结论
+3. 不能遗漏任何重要的技术细节
+4. 使用准确的专业术语和学术表达
+5. 摘要长度应充分反映原文内容的丰富程度
+
+请提供完整详细的中文摘要：
+"""
+
+            response = self.client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "你是专业的学术论文翻译专家，确保将英文论文内容完整、准确地翻译成中文，不遗漏任何重要信息。"},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=max_tokens,
+                temperature=0.7,  # 提高温度以增加详细程度
+                top_p=0.95
+            )
+
+            summary = response.choices[0].message.content.strip()
+            logger.info(f"重新生成论文 {paper.arxiv_id} 的摘要，长度：{len(summary)}字符")
+            return summary
+
+        except Exception as e:
+            logger.error(f"重新生成摘要失败 {paper.arxiv_id}: {e}")
+            return None
 
     def get_research_insights(self, days: int = 7) -> str:
         """
@@ -391,6 +512,9 @@ class DeepSeekAnalyzer:
         """
         try:
             papers = []
+            found_ids = []
+            missing_ids = []
+
             for paper_id in paper_ids:
                 # 从数据库获取论文
                 import sqlite3
@@ -408,6 +532,21 @@ class DeepSeekAnalyzer:
                             'abstract': result[1],
                             'summary': result[2] or result[1][:500]
                         })
+                        found_ids.append(paper_id)
+                    else:
+                        missing_ids.append(paper_id)
+
+            # 如果有缺失的论文，提供详细错误信息
+            if missing_ids:
+                error_msg = f"以下论文在数据库中未找到：{', '.join(missing_ids)}\n\n"
+                if found_ids:
+                    error_msg += f"找到的论文：{', '.join(found_ids)}"
+                else:
+                    error_msg += "请检查论文ID是否正确，或先爬取这些论文。\n\n提示：\n"
+                    error_msg += "1. 访问论文列表页面查看可用的论文ID\n"
+                    error_msg += "2. 使用爬虫功能获取新论文\n"
+                    error_msg += "3. 确保论文ID格式正确（如：2510.25767）"
+                return error_msg
 
             if len(papers) < 2:
                 return "需要至少两篇论文进行比较。"

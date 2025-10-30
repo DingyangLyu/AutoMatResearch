@@ -1,0 +1,843 @@
+{% extends "base.html" %}
+
+{% block title %}关键词管理 - arXiv论文爬取Agent{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 关键词管理页面专用样式 */
+.main-content {
+    background: transparent;
+    padding: 20px;
+}
+
+/* 页面标题样式 */
+.page-header {
+    background: #2c3e50;
+    color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-header h2 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 2rem;
+}
+
+.page-header p {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    font-size: 1rem;
+}
+
+.page-header .btn-outline-primary {
+    border-color: rgba(255, 255, 255, 0.7);
+    color: white;
+    margin-top: 1rem;
+}
+
+.page-header .btn-outline-primary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: white;
+}
+
+/* 关键词卡片样式 */
+.keyword-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    background: white;
+    position: relative;
+}
+
+.keyword-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #007bff;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.keyword-card.active {
+    background: #f8f9fa;
+    border-color: #007bff;
+}
+
+.keyword-card.active::before {
+    opacity: 1;
+}
+
+.keyword-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.keyword-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.keyword-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.keyword-meta {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.keyword-meta i {
+    color: #007bff;
+}
+
+.keyword-query {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    word-break: break-all;
+    border: 1px solid #dee2e6;
+    color: #495057;
+}
+
+/* 关键词输入区域 */
+.keywords-input-group {
+    margin-bottom: 1.5rem;
+}
+
+.keyword-tag {
+    display: inline-flex;
+    align-items: center;
+    background: #007bff;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    margin: 0.25rem;
+    border-radius: 15px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.keyword-tag:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+}
+
+/* 逻辑选择器 */
+.logic-selector {
+    margin: 2rem 0;
+}
+
+.logic-option {
+    padding: 1rem;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    margin: 0.75rem 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.logic-option:hover {
+    border-color: #007bff;
+    background: #f8f9ff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+}
+
+.logic-option.selected {
+    border-color: #007bff;
+    background: #007bff;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.logic-option.selected h6,
+.logic-option.selected p,
+.logic-option.selected .example-keywords-list {
+    color: white !important;
+}
+
+/* 添加关键词区域 */
+.add-keyword-section {
+    margin-bottom: 2rem;
+}
+
+.add-keyword-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.add-keyword-header {
+    background: #343a40;
+    color: white;
+    padding: 1rem 1.5rem;
+}
+
+.add-keyword-header h5 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.add-keyword-content {
+    padding: 1.5rem;
+}
+
+/* 查询预览 */
+.query-preview {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-top: 1rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.query-preview-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* 示例区域 */
+.example-keywords {
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.example-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.example-group {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 4px;
+    border-left: 3px solid #007bff;
+}
+
+.example-keywords-list {
+    font-size: 0.875rem;
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+/* 删除按钮 */
+.btn-remove-keyword {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    margin-left: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-remove-keyword:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+/* 现有关键词区域标题 */
+.main-content h4 {
+    color: #343a40;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+/* 空状态样式 */
+.text-center.py-5 {
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+    margin: 2rem 0;
+    padding: 3rem 2rem;
+}
+
+/* 按钮样式 - 只针对关键词管理页面的按钮 */
+.main-content .btn-primary:not(.btn-sm):not(.page-header .btn-primary) {
+    background: #007bff;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.main-content .btn-primary:not(.btn-sm):not(.page-header .btn-primary):hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+.main-content .btn-outline-primary:not(.btn-sm):not(.page-header .btn-outline-primary) {
+    border: 1px solid #007bff;
+    color: #007bff;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.main-content .btn-outline-primary:not(.btn-sm):not(.page-header .btn-outline-primary):hover {
+    background: #007bff;
+    border-color: #007bff;
+    transform: translateY(-1px);
+}
+
+/* 表单控件样式 - 仅限关键词管理页面 */
+.main-content .form-control {
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.main-content .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.main-content .form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.main-content .form-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* 输入组样式 - 仅限关键词管理页面 */
+.main-content .input-group .btn:not(.btn-sm) {
+    border-radius: 0 4px 4px 0;
+    border: 1px solid #007bff;
+    background: #007bff;
+    color: white;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.main-content .input-group .btn:not(.btn-sm):hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+}
+
+.main-content .input-group .form-control {
+    border-radius: 4px 0 0 4px;
+    border-right: none;
+}
+
+/* 简化的动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .container-fluid {
+        margin: 10px;
+        padding: 20px;
+        border-radius: 15px;
+    }
+
+    h2 {
+        font-size: 2rem;
+    }
+
+    h4 {
+        font-size: 1.5rem;
+    }
+
+    .keyword-card {
+        margin-bottom: 1rem;
+    }
+
+    .logic-option {
+        margin: 0.5rem 0;
+        padding: 1rem;
+    }
+
+    .add-keyword-header {
+        padding: 1rem 1.5rem;
+    }
+
+    .add-keyword-header h5 {
+        font-size: 1.1rem;
+    }
+
+    .btn-lg {
+        padding: 0.5rem 1.5rem;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .container-fluid {
+        margin: 5px;
+        padding: 15px;
+    }
+
+    h2 {
+        font-size: 1.8rem;
+    }
+
+    .keyword-card {
+        margin-bottom: 0.75rem;
+    }
+
+    .add-keyword-content {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 页面标题 -->
+<div class="page-header">
+    <h2>关键词管理</h2>
+    <p>简化多关键词版本 - 轻松管理您的学术搜索关键词</p>
+    <button type="button" class="btn btn-outline-primary btn-lg" onclick="showQueryExamples()">
+        <i class="fas fa-lightbulb me-2"></i>查看示例
+    </button>
+</div>
+
+    <!-- Add Keyword Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="add-keyword-section">
+                <div class="add-keyword-card">
+                    <div class="add-keyword-header">
+                        <h5><i class="fas fa-plus-circle me-2"></i>添加新关键词</h5>
+                    </div>
+                    <div class="add-keyword-content">
+                        <form method="post" action="{{ url_for('add_keyword_multi') }}" id="multiKeywordForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="name" class="form-label">
+                                        <i class="fas fa-tag me-2"></i>关键词名称 *
+                                    </label>
+                                    <input type="text" class="form-control" id="name" name="name"
+                                           placeholder="例如: materials_ml" required>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>英文标识符，用于数据库文件名
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="display_name" class="form-label">
+                                        <i class="fas fa-eye me-2"></i>显示名称 *
+                                    </label>
+                                    <input type="text" class="form-control" id="display_name" name="display_name"
+                                           placeholder="例如: 材料科学与机器学习" required>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>在界面上显示的名称
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="keywords-input-group">
+                                <label for="keywords" class="form-label">
+                                    <i class="fas fa-search me-2"></i>搜索关键词 *
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="keywordInput"
+                                           placeholder="输入关键词后按回车或点击添加">
+                                    <button type="button" class="btn" onclick="addKeyword()">
+                                        <i class="fas fa-plus me-2"></i> 添加
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>输入您的搜索关键词，例如: materials science, machine learning
+                                </div>
+
+                                <!-- 关键词标签显示区域 -->
+                                <div id="keywordsTags" class="mt-3"></div>
+
+                                <!-- 隐藏的输入框用于存储关键词列表 -->
+                                <input type="hidden" id="keywords" name="keywords" value="">
+                            </div>
+
+                            <!-- 逻辑选择器 -->
+                            <div class="logic-selector">
+                                <label class="form-label">
+                                    <i class="fas fa-code-branch me-2"></i>关键词逻辑关系 *
+                                </label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="logic-option" id="andOption" onclick="selectLogic('AND')">
+                                            <h6><i class="fas fa-circle-dot me-2"></i>AND 逻辑</h6>
+                                            <p class="mb-2 small">所有关键词都必须出现在论文中</p>
+                                            <div class="example-keywords-list">
+                                                <i class="fas fa-example me-1"></i>例如: materials AND science AND learning
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="logic-option" id="orOption" onclick="selectLogic('OR')">
+                                            <h6><i class="fas fa-circle me-2"></i>OR 逻辑</h6>
+                                            <p class="mb-2 small">任意一个关键词出现在论文中即可</p>
+                                            <div class="example-keywords-list">
+                                                <i class="fas fa-example me-1"></i>例如: materials OR science OR learning
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="logic" name="logic" value="AND">
+                            </div>
+
+                            <!-- 分类选项 -->
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" name="use_categories" id="useCategories">
+                                <label class="form-check-label" for="useCategories">
+                                    <i class="fas fa-layer-group me-2"></i>包含arXiv分类限制（可选）
+                                </label>
+                                <div class="form-text mt-1">
+                                    <i class="fas fa-info-circle me-1"></i>如需限制搜索范围，可添加相关arXiv分类
+                                </div>
+                            </div>
+
+                            <!-- 查询预览 -->
+                            <div id="queryPreview" class="query-preview" style="display: none;">
+                                <div class="query-preview-title">生成的查询预览</div>
+                                <div id="queryText"></div>
+                            </div>
+
+                            <div class="mt-4 text-center">
+                                <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn" disabled>
+                                    <i class="fas fa-plus me-2"></i>添加关键词
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-lg ms-3 px-5" onclick="resetForm()">
+                                    <i class="fas fa-redo me-2"></i>重置
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Query Examples Modal -->
+    <div class="modal fade" id="examplesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0 bg-gradient text-white" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                    <h5 class="modal-title">
+                        <i class="fas fa-lightbulb me-2"></i>关键词组合示例
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="example-keywords">
+                        <div class="example-group">
+                            <div class="example-title">🔬 材料科学</div>
+                            <div class="example-keywords-list">
+                                <div class="mb-2">
+                                    <strong>基础材料研究：</strong> materials science, crystal structure, property prediction
+                                </div>
+                                <div class="mb-2">
+                                    <strong>能源材料：</strong> perovskite, solar cells, photovoltaic
+                                </div>
+                                <div>
+                                    <strong>二维材料：</strong> graphene, 2D materials, electronic properties
+                                </div>
+                            </div>
+                        </div>
+                        <div class="example-group">
+                            <div class="example-title">🤖 机器学习</div>
+                            <div class="example-keywords-list">
+                                <div class="mb-2">
+                                    <strong>深度学习：</strong> deep learning, neural networks, training
+                                </div>
+                                <div class="mb-2">
+                                    <strong>机器学习基础：</strong> machine learning, prediction, algorithms
+                                </div>
+                                <div>
+                                    <strong>人工智能：</strong> artificial intelligence, automation, optimization
+                                </div>
+                            </div>
+                        </div>
+                        <div class="example-group">
+                            <div class="example-title">🔗 跨学科研究</div>
+                            <div class="example-keywords-list">
+                                <div class="mb-2">
+                                    <strong>材料发现：</strong> materials science, machine learning, discovery
+                                </div>
+                                <div class="mb-2">
+                                    <strong>计算材料学：</strong> computational materials, AI, high-throughput
+                                </div>
+                                <div>
+                                    <strong>性能预测：</strong> deep learning, materials, property prediction
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Keywords Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h4 class="mb-4">
+                现有关键词库
+                {% if current_keyword %}
+                <span class="badge bg-primary ms-3 px-3 py-2">当前: {{ current_keyword_config.display_name }}</span>
+                {% endif %}
+            </h4>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for config in keywords %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card keyword-card {% if current_keyword == config.name %}active{% endif %}">
+                <div class="keyword-header">
+                    <h6 class="keyword-title">{{ config.display_name }}</h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            {% if current_keyword != config.name %}
+                            <li>
+                                <form method="post" action="{{ url_for('set_keyword') }}" class="d-inline">
+                                    <input type="hidden" name="keyword" value="{{ config.name }}">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-check me-2"></i>设为当前
+                                    </button>
+                                </form>
+                            </li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{{ url_for('remove_keyword') }}" class="d-inline"
+                                      onsubmit="return confirm('确定要删除关键词 "{{ config.display_name }}" 吗？')">
+                                    <input type="hidden" name="keyword" value="{{ config.name }}">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="fas fa-trash me-2"></i>删除
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="keyword-meta">
+                        <small>
+                            <i class="fas fa-clock me-1"></i>{{ config.created_at.strftime('%Y-%m-%d') }}
+                            <i class="fas fa-file-lines ms-2 me-1"></i>{{ config.paper_count }} 篇论文
+                        </small>
+                    </div>
+                    <div class="keyword-query">
+                        {{ config.search_query }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not keywords %}
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-inbox fa-4x text-muted opacity-50"></i>
+                </div>
+                <h4 class="text-muted mb-3">暂无关键词</h4>
+                <p class="text-muted fs-5 mb-4">请添加您的第一个关键词来开始论文爬取之旅</p>
+                <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('name').focus()">
+                    <i class="fas fa-plus me-2"></i>立即添加关键词
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let keywords = [];
+let selectedLogic = 'AND';
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    selectLogic('AND');
+});
+
+// 添加关键词
+function addKeyword() {
+    const input = document.getElementById('keywordInput');
+    const keyword = input.value.trim();
+
+    if (keyword && !keywords.includes(keyword)) {
+        keywords.push(keyword);
+        updateKeywordsDisplay();
+        updateQueryPreview();
+        input.value = '';
+        input.focus();
+    }
+}
+
+// 回车键添加关键词
+document.getElementById('keywordInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addKeyword();
+    }
+});
+
+// 更新关键词显示
+function updateKeywordsDisplay() {
+    const container = document.getElementById('keywordsTags');
+    container.innerHTML = '';
+
+    keywords.forEach((keyword, index) => {
+        const tag = document.createElement('span');
+        tag.className = 'keyword-tag';
+        tag.innerHTML = `
+            ${keyword}
+            <button type="button" class="btn-remove-keyword" onclick="removeKeyword(${index})">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(tag);
+    });
+
+    // 更新隐藏字段
+    document.getElementById('keywords').value = keywords.join(',');
+
+    // 更新提交按钮状态
+    document.getElementById('submitBtn').disabled = keywords.length === 0;
+}
+
+// 删除关键词
+function removeKeyword(index) {
+    keywords.splice(index, 1);
+    updateKeywordsDisplay();
+    updateQueryPreview();
+}
+
+// 选择逻辑
+function selectLogic(logic) {
+    selectedLogic = logic;
+    document.getElementById('logic').value = logic;
+
+    // 更新UI
+    document.querySelectorAll('.logic-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+
+    if (logic === 'AND') {
+        document.getElementById('andOption').classList.add('selected');
+    } else {
+        document.getElementById('orOption').classList.add('selected');
+    }
+
+    updateQueryPreview();
+}
+
+// 更新查询预览
+function updateQueryPreview() {
+    if (keywords.length === 0) {
+        document.getElementById('queryPreview').style.display = 'none';
+        return;
+    }
+
+    const useCategories = document.getElementById('useCategories').checked;
+    let query = '';
+
+    // 构建查询
+    if (useCategories) {
+        const categories = ['cond-mat.mtrl-sci', 'cond-mat', 'cs.LG', 'cs.AI', 'stat.ML'];
+        query += `(${categories.map(cat => `cat:${cat}`).join(' OR ')}) AND `;
+    }
+
+    // 添加关键词
+    const keywordParts = keywords.map(kw => {
+        return kw.includes(' ') ? `all:"${kw}"` : `all:${kw}`;
+    });
+
+    if (keywords.length === 1) {
+        query += keywordParts[0];
+    } else {
+        query += `(${keywordParts.join(` ${selectedLogic} `)})`;
+    }
+
+    // 显示预览
+    document.getElementById('queryText').textContent = query;
+    document.getElementById('queryPreview').style.display = 'block';
+}
+
+// 监听分类选项变化
+document.getElementById('useCategories').addEventListener('change', updateQueryPreview);
+
+// 显示示例
+function showQueryExamples() {
+    const modal = new bootstrap.Modal(document.getElementById('examplesModal'));
+    modal.show();
+}
+
+// 重置表单
+function resetForm() {
+    keywords = [];
+    updateKeywordsDisplay();
+    selectLogic('AND');
+    document.getElementById('useCategories').checked = false;
+    document.getElementById('keywordInput').value = '';
+    document.getElementById('name').value = '';
+    document.getElementById('display_name').value = '';
+    document.getElementById('queryPreview').style.display = 'none';
+}
+</script>
+{% endblock %}
