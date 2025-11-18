@@ -79,5 +79,8 @@ insights/*
 data/database/
 .pytest_cache/
 
+# Configuration with sensitive data
+config/user_config.json
+
 # Claude
 .claude/

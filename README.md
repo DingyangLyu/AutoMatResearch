@@ -53,7 +53,7 @@ pip install -e .
 
 # 配置环境变量
 cp .env.example .env
-# 编辑.env文件，填入你的DeepSeek API密钥
+# 编辑.env文件，填入你的API密钥或直接在web界面即可使用
 ```
 
 ### 方式三：传统安装方式

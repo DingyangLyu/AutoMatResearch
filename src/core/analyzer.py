@@ -10,11 +10,9 @@ logger = logging.getLogger(__name__)
 
 class DeepSeekAnalyzer:
     def __init__(self, keyword: str = None):
-        self.client = openai.OpenAI(
-            api_key=settings.DEEPSEEK_API_KEY,
-            base_url=settings.DEEPSEEK_BASE_URL
-        )
         self.keyword = keyword
+        self._update_client()
+
         # 根据关键词获取数据库管理器
         if keyword:
             from src.data.keyword_manager import keyword_manager
@@ -33,6 +31,19 @@ class DeepSeekAnalyzer:
 
         # 添加锁机制防止并发生成洞察
         self._generating_insights = set()  # 存储正在生成的洞察键
+
+    def _update_client(self):
+        """更新API客户端配置"""
+        self.api_config = settings.get_api_config()
+        self.client = openai.OpenAI(
+            api_key=self.api_config['api_key'],
+            base_url=self.api_config['base_url']
+        )
+
+    def refresh_config(self):
+        """刷新配置（用于配置热重载）"""
+        settings.load_user_config()
+        self._update_client()
 
     def _init_insights_cache_table(self):
         """初始化洞察缓存表"""
@@ -99,7 +110,7 @@ class DeepSeekAnalyzer:
 """
 
             response = self.client.chat.completions.create(
-                model="deepseek-chat",
+                model=self.api_config['model'],
                 messages=[
                     {"role": "system", "content": "你是专业的学术论文翻译和分析师，擅长将英文科技论文准确、完整地翻译成中文，并确保所有技术细节和专业术语的正确性。"},
                     {"role": "user", "content": prompt}
@@ -238,7 +249,7 @@ class DeepSeekAnalyzer:
 """
 
             response = self.client.chat.completions.create(
-                model="deepseek-chat",
+                model=self.api_config['model'],
                 messages=[
                     {"role": "system", "content": "你是专业的学术论文翻译专家，确保将英文论文内容完整、准确地翻译成中文，不遗漏任何重要信息。"},
                     {"role": "user", "content": prompt}
@@ -365,7 +376,7 @@ class DeepSeekAnalyzer:
 """
 
             response = self.client.chat.completions.create(
-                model="deepseek-chat",
+                model=self.api_config['model'],
                 messages=[
                     {"role": "system", "content": "你是一个专业的研究趋势分析师，擅长从学术论文中提取有价值的洞察。"},
                     {"role": "user", "content": prompt}
@@ -568,7 +579,7 @@ class DeepSeekAnalyzer:
 """
 
             response = self.client.chat.completions.create(
-                model="deepseek-chat",
+                model=self.api_config['model'],
                 messages=[
                     {"role": "system", "content": "你是一个专业的学术比较分析师，擅长深入分析和比较不同研究论文。"},
                     {"role": "user", "content": prompt}

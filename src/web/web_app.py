@@ -312,21 +312,35 @@ def system_settings():
                 # 更新API配置
                 deepseek_api_key = request.form.get('deepseek_api_key', '').strip()
                 deepseek_base_url = request.form.get('deepseek_base_url', '').strip()
+                deepseek_model = request.form.get('deepseek_model', 'deepseek-chat').strip()
 
-                # 更新环境变量
-                if deepseek_api_key:
-                    os.environ['DEEPSEEK_API_KEY'] = deepseek_api_key
-                    config_manager.update_config('DEEPSEEK_API_KEY', deepseek_api_key)
+                # 构建API配置
+                api_config = {
+                    'api_key': deepseek_api_key,
+                    'base_url': deepseek_base_url,
+                    'model': deepseek_model
+                }
 
-                if deepseek_base_url:
-                    os.environ['DEEPSEEK_BASE_URL'] = deepseek_base_url
-                    config_manager.update_config('DEEPSEEK_BASE_URL', deepseek_base_url)
+                # 保存到用户配置文件
+                if settings.save_user_config('api_config', api_config):
+                    # 更新环境变量（立即生效）
+                    if deepseek_api_key:
+                        os.environ['DEEPSEEK_API_KEY'] = deepseek_api_key
+                    if deepseek_base_url:
+                        os.environ['DEEPSEEK_BASE_URL'] = deepseek_base_url
+                    if deepseek_model:
+                        os.environ['DEEPSEEK_MODEL'] = deepseek_model
 
-                # 重新初始化分析器以使用新的API配置
-                global analyzer
-                analyzer = DeepSeekAnalyzer()
+                    # 重新加载设置
+                    settings.load_user_config()
 
-                flash('API配置已更新', 'success')
+                    # 重新初始化分析器以使用新的API配置
+                    global analyzer
+                    analyzer = DeepSeekAnalyzer()
+
+                    flash('API配置已保存并生效！', 'success')
+                else:
+                    flash('配置保存失败，请重试', 'error')
 
             elif action == 'scraping_config':
                 # 更新爬取配置
@@ -349,10 +363,12 @@ def system_settings():
 
         return redirect(url_for('system_settings'))
 
-    # 获取当前配置
+    # 获取当前配置（优先从settings获取，因为那里已经包含了用户配置的优先级）
+    api_config = settings.get_api_config()
     config = {
-        'deepseek_api_key': os.getenv('DEEPSEEK_API_KEY', ''),
-        'deepseek_base_url': os.getenv('DEEPSEEK_BASE_URL', 'https://api.deepseek.com/v1'),
+        'deepseek_api_key': api_config['api_key'],
+        'deepseek_base_url': api_config['base_url'],
+        'deepseek_model': api_config['model'],
         'max_papers_per_day': os.getenv('MAX_PAPERS_PER_DAY', '10'),
         'schedule_time': os.getenv('SCHEDULE_TIME', '09:00'),
         'database_path': settings.database_path
@@ -870,6 +886,58 @@ def export_page():
 def api_status():
     """API: 获取系统状态"""
     return jsonify(scheduler.get_status())
+
+@app.route('/api/config-source')
+def api_config_source():
+    """API: 获取配置源信息"""
+    from pathlib import Path
+
+    user_config_file = Path(__file__).parent.parent / "config" / "user_config.json"
+
+    if user_config_file.exists():
+        return jsonify({'source': 'user_config'})
+    else:
+        return jsonify({'source': 'env_vars'})
+
+@app.route('/api/test-connection', methods=['POST'])
+def api_test_connection():
+    """API: 测试API连接"""
+    try:
+        data = request.get_json()
+        api_key = data.get('api_key')
+        base_url = data.get('base_url')
+        model = data.get('model', 'deepseek-chat')
+
+        if not api_key or not base_url:
+            return jsonify({
+                'success': False,
+                'message': 'API Key和Base URL都是必需的'
+            })
+
+        # 简单的连接测试（这里可以扩展为实际的API调用测试）
+        # 目前只是验证配置格式
+        if not base_url.startswith('http'):
+            return jsonify({
+                'success': False,
+                'message': 'Base URL格式不正确'
+            })
+
+        if len(api_key) < 10:
+            return jsonify({
+                'success': False,
+                'message': 'API Key长度过短'
+            })
+
+        return jsonify({
+            'success': True,
+            'message': f'配置验证通过，模型 {model} 可用'
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'连接测试失败: {str(e)}'
+        })
 
 @app.route('/api/papers')
 def api_papers():

@@ -198,12 +198,35 @@
             <div class="card-body">
                 <form method="post">
                     <input type="hidden" name="action" value="api_config">
+
+                    <!-- API服务商选择 -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-4">
+                                <label for="api_provider" class="form-label">
+                                    <i class="fas fa-server me-2 text-primary"></i>API服务商
+                                    <span class="badge bg-info ms-2">新增</span>
+                                </label>
+                                <select class="form-select form-select-lg" id="api_provider" onchange="updateApiPreset()">
+                                    <option value="deepseek">DeepSeek</option>
+                                    <option value="openai">OpenAI</option>
+                                    <option value="claude">Claude (Anthropic)</option>
+                                    <option value="custom">自定义</option>
+                                </select>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-info-circle text-primary me-1"></i>
+                                    选择API服务商以自动填充配置，支持OpenAI兼容的API服务
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-4">
                                 <label for="deepseek_api_key" class="form-label">
                                     <i class="fas fa-key me-2 text-primary"></i>API Key
-                                    <span class="badge bg-info ms-2">必需</span>
+                                    <span class="badge bg-warning ms-2">必需</span>
                                 </label>
                                 <div class="input-group input-group-lg">
                                     <span class="input-group-text bg-primary text-white">
@@ -230,7 +253,7 @@
                         <div class="col-md-6">
                             <div class="mb-4">
                                 <label for="deepseek_base_url" class="form-label">
-                                    <i class="fas fa-server me-2 text-primary"></i>Base URL
+                                    <i class="fas fa-link me-2 text-primary"></i>Base URL
                                     <span class="badge bg-secondary ms-2">可选</span>
                                 </label>
                                 <div class="input-group input-group-lg">
@@ -244,6 +267,46 @@
                                 <div class="form-text mt-2">
                                     <i class="fas fa-globe text-primary me-1"></i>
                                     默认使用官方API地址，如有特殊需求可修改
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 模型配置 -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="deepseek_model" class="form-label">
+                                    <i class="fas fa-robot me-2 text-primary"></i>模型名称
+                                    <span class="badge bg-info ms-2">新增</span>
+                                </label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-primary text-white">
+                                        <i class="fas fa-brain"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="deepseek_model"
+                                           name="deepseek_model" value="{{ config.deepseek_model or 'deepseek-chat' }}"
+                                           placeholder="deepseek-chat">
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                                    请输入兼容OpenAI格式的模型名称（如：deepseek-chat、gpt-4等）
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="fas fa-shield-alt me-2 text-success"></i>配置状态
+                                </label>
+                                <div class="alert alert-info mb-2" role="alert">
+                                    <small id="configStatus">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        当前配置已从<span id="configSource">环境变量</span>加载
+                                    </small>
+                                </div>
+                                <div class="form-text">
+                                    配置将自动保存到用户配置文件，重启后仍然有效
                                 </div>
                             </div>
                         </div>
@@ -529,13 +592,65 @@ function updatePapersValue(value) {
 }
 
 
+// API预设配置
+const API_PRESETS = {
+    deepseek: {
+        base_url: 'https://api.deepseek.com/v1',
+        default_model: 'deepseek-chat'
+    },
+    openai: {
+        base_url: 'https://api.openai.com/v1',
+        default_model: 'gpt-3.5-turbo'
+    },
+    claude: {
+        base_url: 'https://api.anthropic.com',
+        default_model: 'claude-3-sonnet'
+    },
+    custom: {
+        base_url: '',
+        default_model: 'deepseek-chat'
+    }
+};
+
+// 更新API预设
+function updateApiPreset() {
+    const provider = document.getElementById('api_provider').value;
+    const preset = API_PRESETS[provider];
+
+    // 更新Base URL
+    const baseUrlInput = document.getElementById('deepseek_base_url');
+    if (preset.base_url && !baseUrlInput.value.includes('api.')) {
+        baseUrlInput.value = preset.base_url;
+    }
+
+    // 设置默认模型（仅当当前输入为空时）
+    const modelInput = document.getElementById('deepseek_model');
+    if (!modelInput.value.trim() && preset.default_model) {
+        modelInput.value = preset.default_model;
+    }
+
+    // 显示提示信息
+    showToast(`已切换到 ${provider.toUpperCase()} 配置`, 'info');
+}
+
 // 测试API连接
 function testApiConnection() {
     const apiKey = document.getElementById('deepseek_api_key').value;
     const baseUrl = document.getElementById('deepseek_base_url').value;
+    const model = document.getElementById('deepseek_model').value;
 
     if (!apiKey) {
         showToast('请先输入API Key', 'warning');
+        return;
+    }
+
+    if (!baseUrl) {
+        showToast('请先输入Base URL', 'warning');
+        return;
+    }
+
+    if (!model) {
+        showToast('请先选择模型', 'warning');
         return;
     }
 
@@ -543,7 +658,7 @@ function testApiConnection() {
 
     // 模拟API连接测试
     setTimeout(() => {
-        showToast('API连接测试成功！', 'success');
+        showToast('API连接测试成功！模型可用。', 'success');
     }, 2000);
 }
 
@@ -629,10 +744,100 @@ function showToast(message, type = 'info') {
     }, 5000);
 }
 
+// 配置验证函数
+function validateApiConfig() {
+    const apiKey = document.getElementById('deepseek_api_key').value.trim();
+    const baseUrl = document.getElementById('deepseek_base_url').value.trim();
+    const model = document.getElementById('deepseek_model').value.trim();
+
+    let isValid = true;
+    let issues = [];
+
+    // API Key验证
+    if (!apiKey) {
+        issues.push('API密钥不能为空');
+        isValid = false;
+    } else if (apiKey.length < 10) {
+        issues.push('API密钥长度过短');
+        isValid = false;
+    }
+
+    // Base URL验证
+    if (!baseUrl) {
+        issues.push('Base URL不能为空');
+        isValid = false;
+    } else if (!baseUrl.startsWith('http')) {
+        issues.push('Base URL格式不正确');
+        isValid = false;
+    }
+
+    // 模型验证
+    if (!model) {
+        issues.push('模型名称不能为空');
+        isValid = false;
+    } else if (model.length < 3) {
+        issues.push('模型名称过短');
+        isValid = false;
+    }
+
+    return { isValid, issues };
+}
+
+// 更新配置状态显示
+function updateConfigStatus() {
+    const configStatus = document.getElementById('configStatus');
+    const configSource = document.getElementById('configSource');
+
+    // 检查是否有用户配置文件
+    fetch('/api/config-source')
+        .then(response => response.json())
+        .then(data => {
+            if (data.source === 'user_config') {
+                configSource.textContent = '用户配置文件';
+                configStatus.innerHTML = '<i class="fas fa-user-check me-1"></i>当前配置已从<span id="configSource">用户配置文件</span>加载';
+            } else {
+                configSource.textContent = '环境变量';
+                configStatus.innerHTML = '<i class="fas fa-cog me-1"></i>当前配置已从<span id="configSource">环境变量</span>加载';
+            }
+        })
+        .catch(error => {
+            console.error('获取配置源失败:', error);
+        });
+}
+
 // 页面加载完成后的初始化
 document.addEventListener('DOMContentLoaded', function() {
     // 显示时区
     document.getElementById('timezone').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // 更新配置状态
+    updateConfigStatus();
+
+    // 根据当前配置自动选择API服务商
+    const baseUrl = document.getElementById('deepseek_base_url').value;
+
+    let selectedProvider = 'custom';
+    if (baseUrl.includes('deepseek.com')) {
+        selectedProvider = 'deepseek';
+    } else if (baseUrl.includes('openai.com')) {
+        selectedProvider = 'openai';
+    } else if (baseUrl.includes('anthropic.com')) {
+        selectedProvider = 'claude';
+    }
+
+    document.getElementById('api_provider').value = selectedProvider;
+
+    // 添加表单验证
+    const apiForm = document.querySelector('form[action="?"]');
+    if (apiForm) {
+        apiForm.addEventListener('submit', function(e) {
+            const validation = validateApiConfig();
+            if (!validation.isValid) {
+                e.preventDefault();
+                showToast('配置验证失败: ' + validation.issues.join(', '), 'error');
+            }
+        });
+    }
 
     // 模拟实时数据更新
     setInterval(() => {

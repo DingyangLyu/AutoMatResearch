@@ -39,9 +39,10 @@ class Settings:
 
     def load_from_env(self):
         """从环境变量加载配置"""
-        # DeepSeek API配置
+        # DeepSeek API配置 - 默认值
         self.DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY', '')
         self.DEEPSEEK_BASE_URL = os.getenv('DEEPSEEK_BASE_URL', 'https://api.deepseek.com/v1')
+        self.DEEPSEEK_MODEL = os.getenv('DEEPSEEK_MODEL', 'deepseek-chat')
 
         # 数据库配置
         self.DATABASE_URL = os.getenv('DATABASE_URL', f'sqlite:///{DATABASE_DIR}/arxiv_papers.db')
@@ -67,10 +68,54 @@ class Settings:
             try:
                 with open(USER_CONFIG_FILE, 'r', encoding='utf-8') as f:
                     user_config = json.load(f)
+                    # 支持API配置的嵌套结构
+                    if 'api_config' in user_config:
+                        api_config = user_config['api_config']
+                        # 用户配置优先级高于环境变量
+                        if 'api_key' in api_config and api_config['api_key']:
+                            self.DEEPSEEK_API_KEY = api_config['api_key']
+                        if 'base_url' in api_config and api_config['base_url']:
+                            self.DEEPSEEK_BASE_URL = api_config['base_url']
+                        if 'model' in api_config and api_config['model']:
+                            self.DEEPSEEK_MODEL = api_config['model']
+
+                    # 兼容旧的扁平配置结构
                     for key, value in user_config.items():
-                        setattr(self, key, value)
+                        if key != 'api_config' and hasattr(self, key):
+                            setattr(self, key, value)
             except Exception as e:
                 print(f"加载用户配置失败: {e}")
+
+    def save_user_config(self, section: str, config_data: dict):
+        """保存用户配置到文件"""
+        try:
+            user_config = {}
+            if USER_CONFIG_FILE.exists():
+                with open(USER_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                    user_config = json.load(f)
+
+            # 更新指定section的配置
+            user_config[section] = config_data
+
+            # 确保目录存在
+            USER_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+            # 保存配置
+            with open(USER_CONFIG_FILE, 'w', encoding='utf-8') as f:
+                json.dump(user_config, f, indent=2, ensure_ascii=False)
+
+            return True
+        except Exception as e:
+            print(f"保存用户配置失败: {e}")
+            return False
+
+    def get_api_config(self) -> dict:
+        """获取当前API配置"""
+        return {
+            'api_key': self.DEEPSEEK_API_KEY,
+            'base_url': self.DEEPSEEK_BASE_URL,
+            'model': self.DEEPSEEK_MODEL
+        }
 
     @property
     def log_file_path(self) -> Path:
