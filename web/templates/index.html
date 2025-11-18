@@ -744,12 +744,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const originalText = scrapeBtn.innerHTML;
         scrapeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>爬取中...';
 
-        // 模拟加载完成后重置（实际会由页面跳转处理）
-        setTimeout(() => {
+        // 超时保护：如果长时间没有响应，提供重置选项
+        const resetTimeout = setTimeout(() => {
             scrapeBtn.classList.remove('loading');
             scrapeBtn.disabled = false;
             scrapeBtn.innerHTML = originalText;
-        }, 5000);
+            showToast('爬取操作可能已完成，请检查结果页面', 'info');
+        }, 120000); // 2分钟超时
     });
 
     // 日期选择限制
