@@ -21,9 +21,9 @@ class PaperScheduler:
             logger.info("开始执行每日论文爬取任务")
             start_time = datetime.now()
 
-            # 爬取新论文（启用增量爬取）
+            # 爬取新论文（启用增量爬取，默认向前搜索更新的论文）
             keywords = settings.SEARCH_KEYWORDS
-            saved_count = self.scraper.scrape_and_save(keywords, incremental=True)
+            saved_count = self.scraper.scrape_and_save(keywords, incremental=True, search_direction="forward")
 
             if saved_count > 0:
                 logger.info(f"成功爬取并保存了 {saved_count} 篇新论文")

@@ -13,5 +13,7 @@
     "cs.LG",
     "cs.CV",
     "cs.CL"
-  ]
+  ],
+  "MAX_PAPERS_PER_DAY": "100",
+  "SCHEDULE_TIME": "09:00"
 }

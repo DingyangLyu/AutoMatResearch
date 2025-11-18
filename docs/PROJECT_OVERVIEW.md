@@ -44,8 +44,8 @@ AutoMatResearch 是一个基于 DeepSeek AI 的智能 arXiv 论文自动爬取�
 - **数据库**: SQLite (支持多数据库)
 - **AI服务**: DeepSeek API
 - **前端**: Bootstrap 5, HTML5, JavaScript
-- **任务调度**: APScheduler
-- **数据处理**: pandas, requests
+- **任务调度**: Python schedule
+- **数据处理**: requests, BeautifulSoup4, feedparser
 - **日志系统**: Python logging
 
 ## 📋 功能模块详解

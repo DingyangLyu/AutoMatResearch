@@ -435,6 +435,11 @@ def scrape_more():
     try:
         logger.info("Web界面触发增量爬取")
 
+        # 获取搜索方向参数
+        search_direction = request.form.get('search_direction', 'backward')  # 默认向后（兼容旧版本）
+        custom_start_date = request.form.get('custom_start_date', '').strip()
+        custom_end_date = request.form.get('custom_end_date', '').strip()
+
         # 验证用户输入的数量
         try:
             additional_count = int(request.form.get('additional_count', 10))
@@ -448,7 +453,7 @@ def scrape_more():
             additional_count = 200
             flash('请求数量超过最大限制，已调整为200篇', 'warning')
 
-        logger.info(f"用户请求爬取 {additional_count} 篇论文")
+        logger.info(f"用户请求爬取 {additional_count} 篇论文，搜索方向: {search_direction}")
 
         # 获取当前关键词的组件和配置
         current_scraper, current_analyzer, current_exporter = get_current_components()
@@ -459,8 +464,46 @@ def scrape_more():
         keywords = [search_query]  # 转换为列表格式以兼容现有接口
 
         logger.info(f"使用当前关键词进行爬取: {current_config.display_name} ({search_query})")
-        saved_count = current_scraper.scrape_more_papers(keywords, additional_count)
-        flash(f'增量爬取完成，额外保存了 {saved_count} 篇新论文', 'success')
+
+        # 根据搜索方向选择不同的爬取方法
+        if search_direction == 'forward':
+            # 搜索更新的论文
+            saved_count = current_scraper.scrape_and_save(
+                keywords,
+                max_papers=additional_count,
+                incremental=True,
+                search_direction="forward"
+            )
+            flash(f'向前搜索完成，保存了 {saved_count} 篇新论文', 'success')
+        elif search_direction == 'backward':
+            # 搜索更早的论文（使用原有的scrape_more_papers方法保持兼容性）
+            saved_count = current_scraper.scrape_more_papers(keywords, additional_count)
+            flash(f'向后搜索完成，额外保存了 {saved_count} 篇新论文', 'success')
+        elif search_direction == 'custom':
+            # 自定义时间范围搜索
+            if not custom_start_date or not custom_end_date:
+                flash('自定义搜索需要提供开始和结束日期', 'error')
+                return redirect(url_for('index'))
+
+            try:
+                start_date = datetime.strptime(custom_start_date, '%Y-%m-%d')
+                end_date = datetime.strptime(custom_end_date, '%Y-%m-%d')
+
+                saved_count = current_scraper.scrape_and_save(
+                    keywords,
+                    max_papers=additional_count,
+                    incremental=True,
+                    search_direction="custom",
+                    custom_start_date=start_date,
+                    custom_end_date=end_date
+                )
+                flash(f'自定义范围搜索完成，保存了 {saved_count} 篇新论文', 'success')
+            except (ValueError, TypeError) as e:
+                flash(f'日期格式错误: {e}', 'error')
+                return redirect(url_for('index'))
+        else:
+            flash('不支持的搜索方向', 'error')
+            return redirect(url_for('index'))
 
         # 如果保存了新论文，自动生成摘要
         if saved_count > 0:
@@ -887,7 +930,8 @@ def api_paper_bibtex(arxiv_id):
 
         # 生成BibTeX key
         first_author_lastname = paper.authors[0].split()[-1] if paper.authors else "Unknown"
-        year = paper.published_date.year if paper.published_date else datetime.now().year
+        current_year = datetime.now().year  # 明确使用顶部导入的datetime
+        year = paper.published_date.year if paper.published_date else current_year
         title_words = paper.title.split()[:3]
         title_key = ''.join([word.strip('.,!?;:') for word in title_words])
         bibtex_key = f"{first_author_lastname}{year}{title_key}"
@@ -928,7 +972,7 @@ if __name__ == '__main__':
     os.makedirs('static', exist_ok=True)
 
     print("🌐 启动Web界面...")
-    print("📱 访问地址: http://localhost:5000")
+    print("📱 访问地址: http://localhost:5001")
     print("💡 使用 Ctrl+C 停止服务")
 
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)

@@ -310,14 +310,22 @@ class ArxivScraper:
             logger.error(f"解析论文条目失败: {e}")
             return None
 
-    def scrape_and_save(self, keywords: List[str], max_papers: int = None, incremental: bool = True) -> int:
+    def scrape_and_save(self, keywords: List[str], max_papers: int = None, incremental: bool = True,
+                        search_direction: str = "forward", custom_start_date: datetime = None,
+                        custom_end_date: datetime = None) -> int:
         """
         爬取并保存论文
 
         Args:
             keywords: 关键词列表
             max_papers: 最大论文数量
-            incremental: 是否支持增量爬取（如果当天已有论文，继续爬取更多）
+            incremental: 是否支持增量爬取
+            search_direction: 搜索方向，可选值：
+                           - "forward": 从最新论文日期之后搜索更新的论文
+                           - "backward": 从最新论文日期之前搜索更早的论文
+                           - "custom": 使用自定义时间范围
+            custom_start_date: 自定义搜索开始日期（仅在search_direction="custom"时使用）
+            custom_end_date: 自定义搜索结束日期（仅在search_direction="custom"时使用）
 
         Returns:
             成功保存的论文数量
@@ -325,34 +333,250 @@ class ArxivScraper:
         if max_papers is None:
             max_papers = settings.MAX_PAPERS_PER_DAY
 
-        # 如果启用了增量爬取，检查当天已保存的论文数量
+        # 如果启用了增量爬取，使用智能搜索策略
         if incremental:
-            today_papers_count = self._get_today_papers_count()
-            logger.info(f"今天已保存 {today_papers_count} 篇论文")
+            latest_paper_date = self.db.get_latest_paper_date()
 
-            # 如果今天已有论文，则继续爬取直到达到max_papers的倍数
-            # 例如：已有10篇，目标再增加10篇，总共20篇
-            target_total = ((today_papers_count // max_papers) + 1) * max_papers
-            search_limit = target_total - today_papers_count
-
-            # 确保至少搜索max_papers篇
-            search_limit = max(search_limit, max_papers)
-
-            logger.info(f"增量爬取模式：目标再增加 {search_limit} 篇论文")
+            if not latest_paper_date:
+                # 数据库为空，执行正常搜索
+                logger.info("数据库为空，执行正常搜索")
+                papers = self.search_papers(keywords, max_papers)
+                saved_count = 0
+                for paper in papers:
+                    if self.db.save_paper(paper):
+                        saved_count += 1
+                        logger.info(f"保存论文: {paper.title} (ID: {paper.arxiv_id})")
+                    else:
+                        logger.debug(f"论文已存在，跳过: {paper.arxiv_id}")
+            else:
+                # 根据搜索方向执行不同的策略
+                if search_direction == "forward":
+                    saved_count = self._search_newer_papers(keywords, latest_paper_date, max_papers)
+                elif search_direction == "backward":
+                    saved_count = self._search_older_papers(keywords, latest_paper_date, max_papers)
+                elif search_direction == "custom":
+                    if not custom_start_date or not custom_end_date:
+                        raise ValueError("自定义搜索模式需要提供custom_start_date和custom_end_date")
+                    saved_count = self._search_custom_range(keywords, custom_start_date, custom_end_date, max_papers)
+                else:
+                    raise ValueError(f"不支持的搜索方向: {search_direction}")
         else:
-            search_limit = max_papers
+            # 非增量模式，执行正常搜索
+            papers = self.search_papers(keywords, max_papers)
+            saved_count = 0
+            for paper in papers:
+                if self.db.save_paper(paper):
+                    saved_count += 1
+                    logger.info(f"保存论文: {paper.title} (ID: {paper.arxiv_id})")
+                else:
+                    logger.debug(f"论文已存在，跳过: {paper.arxiv_id}")
 
-        papers = self.search_papers(keywords, search_limit)
+        logger.info(f"成功保存 {saved_count} 篇论文")
+        return saved_count
+
+    def _search_newer_papers(self, keywords: List[str], latest_paper_date: datetime, max_papers: int) -> int:
+        """
+        搜索比最新论文更新的论文（解决你的原始问题）
+
+        Args:
+            keywords: 关键词列表
+            latest_paper_date: 数据库中最新的论文发表日期
+            max_papers: 最大论文数量
+
+        Returns:
+            成功保存的论文数量
+        """
+        from datetime import timedelta
+
+        # 从最新论文的后一天开始搜索
+        search_start_date = latest_paper_date + timedelta(days=1)
+        search_end_date = datetime.now() + timedelta(days=1)  # 包含今天和未来一天
+
+        logger.info(f"搜索更新论文：{search_start_date.date()} 到 {search_end_date.date()}（基于最新论文：{latest_paper_date.date()}）")
+
+        return self._search_and_save_in_range(keywords, search_start_date, search_end_date, max_papers)
+
+    def _search_older_papers(self, keywords: List[str], latest_paper_date: datetime, max_papers: int) -> int:
+        """
+        搜索比最新论文更早的论文
+
+        Args:
+            keywords: 关键词列表
+            latest_paper_date: 数据库中最新的论文发表日期
+            max_papers: 最大论文数量
+
+        Returns:
+            成功保存的论文数量
+        """
+        from datetime import timedelta
+
+        # 搜索最新论文之前的论文
+        search_end_date = latest_paper_date - timedelta(days=1)
+        search_start_date = search_end_date - timedelta(days=30)  # 先搜索30天
+
+        logger.info(f"搜索更早论文：{search_start_date.date()} 到 {search_end_date.date()}（基于最新论文：{latest_paper_date.date()}）")
+
+        return self._search_and_save_in_range(keywords, search_start_date, search_end_date, max_papers)
+
+    def _search_custom_range(self, keywords: List[str], start_date: datetime, end_date: datetime, max_papers: int) -> int:
+        """
+        在自定义时间范围内搜索论文
+
+        Args:
+            keywords: 关键词列表
+            start_date: 搜索开始日期
+            end_date: 搜索结束日期
+            max_papers: 最大论文数量
+
+        Returns:
+            成功保存的论文数量
+        """
+        logger.info(f"自定义范围搜索：{start_date.date()} 到 {end_date.date()}")
+        return self._search_and_save_in_range(keywords, start_date, end_date, max_papers)
+
+    def _search_and_save_in_range(self, keywords: List[str], start_date: datetime, end_date: datetime, max_papers: int) -> int:
+        """
+        在指定时间范围内搜索并保存论文的通用方法
+
+        Args:
+            keywords: 关键词列表
+            start_date: 搜索开始日期
+            end_date: 搜索结束日期
+            max_papers: 最大论文数量
+
+        Returns:
+            成功保存的论文数量
+        """
         saved_count = 0
 
+        # 使用时间范围搜索
+        papers = self._search_in_time_range(
+            keywords=keywords,
+            start_date=start_date,
+            end_date=end_date,
+            search_limit=max_papers * 2  # 搜索更多候选，确保有足够的新论文
+        )
+
+        logger.info(f"找到 {len(papers)} 篇候选论文")
+
+        # 保存新论文
         for paper in papers:
             if self.db.save_paper(paper):
                 saved_count += 1
-                logger.info(f"保存论文: {paper.title} (ID: {paper.arxiv_id})")
+                logger.info(f"保存新论文: {paper.title} (ID: {paper.arxiv_id}, 日期: {paper.published_date.date()})")
+
+                # 达到目标数量就停止
+                if saved_count >= max_papers:
+                    logger.info(f"已达到目标数量 {max_papers}，停止保存")
+                    break
             else:
                 logger.debug(f"论文已存在，跳过: {paper.arxiv_id}")
 
-        logger.info(f"成功保存 {saved_count} 篇论文")
+        # 如果没有找到足够的新论文，扩大搜索范围
+        if saved_count < max_papers:
+            logger.info(f"只找到 {saved_count} 篇新论文，未达到目标 {max_papers}")
+
+            # 根据搜索方向决定如何扩展范围
+            if start_date > end_date:  # 向前搜索（更新论文）
+                extended_end_date = end_date + timedelta(days=max_papers)
+                logger.info(f"扩大搜索范围到：{start_date.date()} 到 {extended_end_date.date()}")
+            else:  # 向后搜索（更早论文）
+                extended_start_date = start_date - timedelta(days=30)
+                logger.info(f"扩大搜索范围到：{extended_start_date.date()} 到 {end_date.date()}")
+
+            more_papers = self._search_in_time_range(
+                keywords=keywords,
+                start_date=extended_start_date if 'extended_start_date' in locals() else start_date,
+                end_date=extended_end_date if 'extended_end_date' in locals() else end_date,
+                search_limit=max_papers * 2
+            )
+
+            logger.info(f"扩展搜索找到 {len(more_papers)} 篇候选论文")
+
+            for paper in more_papers:
+                if self.db.save_paper(paper):
+                    saved_count += 1
+                    logger.info(f"保存扩展新论文: {paper.title} (ID: {paper.arxiv_id}, 日期: {paper.published_date.date()})")
+
+                    if saved_count >= max_papers:
+                        logger.info(f"已达到目标数量 {max_papers}，停止保存")
+                        break
+                else:
+                    logger.debug(f"论文已存在，跳过: {paper.arxiv_id}")
+
+        return saved_count
+
+    def _incremental_search_from_date(self, keywords: List[str], search_end_date: datetime, max_papers: int) -> int:
+        """
+        从指定日期开始进行增量搜索
+
+        Args:
+            keywords: 关键词列表
+            search_end_date: 搜索结束日期（不包含此日期）
+            max_papers: 最大论文数量
+
+        Returns:
+            成功保存的论文数量
+        """
+        from datetime import timedelta
+        saved_count = 0
+
+        # 设置搜索开始日期，从结束日期往前推30天
+        search_start_date = search_end_date - timedelta(days=30)
+
+        logger.info(f"开始增量搜索：{search_start_date.date()} 到 {search_end_date.date()}")
+
+        # 使用时间范围搜索
+        papers = self._search_in_time_range(
+            keywords=keywords,
+            start_date=search_start_date,
+            end_date=search_end_date,
+            search_limit=max_papers * 2  # 搜索更多候选，确保有足够的新论文
+        )
+
+        logger.info(f"找到 {len(papers)} 篇候选论文")
+
+        # 保存新论文
+        for paper in papers:
+            if self.db.save_paper(paper):
+                saved_count += 1
+                logger.info(f"保存新论文: {paper.title} (ID: {paper.arxiv_id}, 日期: {paper.published_date.date()})")
+
+                # 达到目标数量就停止
+                if saved_count >= max_papers:
+                    logger.info(f"已达到目标数量 {max_papers}，停止保存")
+                    break
+            else:
+                logger.debug(f"论文已存在，跳过: {paper.arxiv_id}")
+
+        # 如果没有找到足够的新论文，扩大搜索范围
+        if saved_count < max_papers:
+            logger.info(f"只找到 {saved_count} 篇新论文，未达到目标 {max_papers}，扩大搜索范围")
+
+            # 扩大搜索范围到90天
+            extended_start_date = search_end_date - timedelta(days=90)
+            logger.info(f"扩展搜索范围到：{extended_start_date.date()} 到 {search_end_date.date()}")
+
+            more_papers = self._search_in_time_range(
+                keywords=keywords,
+                start_date=extended_start_date,
+                end_date=search_start_date,  # 避免重复搜索之前的时间范围
+                search_limit=max_papers * 2
+            )
+
+            logger.info(f"扩展搜索找到 {len(more_papers)} 篇候选论文")
+
+            for paper in more_papers:
+                if self.db.save_paper(paper):
+                    saved_count += 1
+                    logger.info(f"保存扩展新论文: {paper.title} (ID: {paper.arxiv_id}, 日期: {paper.published_date.date()})")
+
+                    if saved_count >= max_papers:
+                        logger.info(f"已达到目标数量 {max_papers}，停止保存")
+                        break
+                else:
+                    logger.debug(f"论文已存在，跳过: {paper.arxiv_id}")
+
         return saved_count
 
     def _get_today_papers_count(self) -> int:
